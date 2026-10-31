@@ -18,7 +18,6 @@
     "eslint.useFlatConfig": true,
     "java.compile.nullAnalysis.mode": "disabled",
     "java.configuration.updateBuildConfiguration": "automatic",
-    "java.jdt.ls.java.home": "/usr/lib/jvm/java-25-openjdk-amd64",
     "java.project.sourcePaths": [
       "spring-backend/src/main/java",
       "spring-backend/src/test/java",
