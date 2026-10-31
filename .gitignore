@@ -5,6 +5,8 @@
 Thumbs.db
 *.local
 .env
+CLAUDE.local.md
+.claude/settings.local.json
 
 ### VS Code ###
 .vscode/
