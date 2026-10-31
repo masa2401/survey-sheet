@@ -1,10 +1,8 @@
 name: Build and Deploy Backend to Railway
 
 on:
-  workflow_run:
-    workflows: ['Fullstack Automated Tests']
-    types: [completed]
-    branches: [main]
+  # 新リポジトリでは本番デプロイ先が未設定のため、自動実行を止めている
+  workflow_dispatch:
 
 jobs:
   flags:
