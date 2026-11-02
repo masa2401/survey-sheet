@@ -33,6 +33,15 @@
   `test.yml` の `paths-ignore` と必須チェックが衝突し、\
   `.md` だけの PR がマージできなくなる問題を、CI 側で解消するため。
 
+## 依存関係
+
+- Dependabot は alerts と security updates だけを使い、npm の version updates は使わない。\
+  バージョンが上がるたびに PR が来ると、更新に伴う修正でマージが滞り、改修作業を妨げるため。
+- `vue-frontend` では `npm audit fix` を使わず、脆弱性のあるパッケージを個別に更新する。\
+  `@vitest/eslint-plugin` 1.6.28 が TypeScript 6 以上を前提にしており、npm が内部エラーで止まる。\
+  TypeScript 6 に上げても、関係のないパッケージを古い版に戻すため使わない。
+- 開発用の依存にしか無く、外部からの入力が届かない脆弱性は、上流の更新を待つ。
+
 ## PDF 生成
 
 - 生成のきっかけは PDF ボタンの押下。\
