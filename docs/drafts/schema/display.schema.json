@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "display.schema.json",
+  "title": "表示設定（display.json）",
+  "description": "画面の文言とアイコンの設定（書いた項目だけがアプリの既定値を上書きする、書き換えても版は変わらない）",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "エディタがこのスキーマを読み込むためのパス",
+      "type": "string"
+    },
+    "appName": {
+      "description": "アプリの名前（ヘッダーとブラウザのタブに表示する）",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30
+    },
+    "terms": {
+      "description": "画面の文言に埋め込む名詞",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sheet": {
+          "description": "回答結果の呼び名で、「自分の◯◯を作成」などに使う（例：スキルシート）",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "item": {
+          "description": "項目の呼び名で、CSV の見出しに使う（例：スキル・技術要素）",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        }
+      }
+    },
+    "scale": {
+      "description": "5段階の尺度",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "description": "尺度の名前で、回答ページと CSV に使う（例：習熟度）",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "levels": {
+          "description": "1〜5 それぞれの説明（1 から順に書く）",
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          }
+        }
+      }
+    },
+    "respondent": {
+      "description": "回答者に関わる文言",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "nameLabel": {
+          "description": "回答者の名前の呼び名で、結果ページの入力欄・印刷と共有の案内文・CSV に使う（例：お名前）",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        }
+      }
+    },
+    "groupIcons": {
+      "description": "グループの id とアイコンの対応（書いていないグループにはアイコンを表示しない）",
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "additionalProperties": {
+        "description": "Lucide のアイコン名（例：monitor）か、icons フォルダに置いた SVG（例：custom/my-icon.svg）",
+        "type": "string",
+        "maxLength": 64,
+        "pattern": "^([a-z0-9]+(-[a-z0-9]+)*|custom/[A-Za-z0-9_-]+\\.svg)$",
+        "patternErrorMessage": "Lucide のアイコン名（小文字の英数字とハイフン）か、custom/ で始まる .svg のファイル名を書いてください。"
+      }
+    },
+    "top": {
+      "description": "TOP ページの文言",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "heading": {
+          "description": "グループを選ぶ欄の見出し",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "hint": {
+          "description": "グループを選ぶ欄の下に表示する補足",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      }
+    },
+    "result": {
+      "description": "結果ページの文言",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "heading": {
+          "description": "結果の見出しで、{name} の位置に回答者の名前が入る（例：{name} 様のスキルシート）",
+          "type": "string",
+          "maxLength": 40,
+          "pattern": "^[^{}]*\\{name\\}[^{}]*$",
+          "patternErrorMessage": "{name} をちょうど1つ含めてください。ほかに { } は使えません。"
+        }
+      }
+    },
+    "csv": {
+      "description": "CSV の書き出し",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fileName": {
+          "description": "ファイル名（拡張子は付けない）で、{name} に回答者の名前、{date} に日付（YYYY-MM-DD）が入る",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60,
+          "pattern": "^([^{}\\\\/:*?\"<>|]|\\{name\\}|\\{date\\})+$",
+          "patternErrorMessage": "使える差し込みは {name} と {date} だけです。ファイル名に使えない文字（\\ / : * ? \" < > |）は使えません。"
+        }
+      }
+    }
+  }
+}

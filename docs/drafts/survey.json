@@ -1,0 +1,251 @@
+{
+  "$schema": "./schema/survey.schema.json",
+  "alwaysShownGroups": [
+    {
+      "id": "common",
+      "label": "共通スキル",
+      "questions": [
+        {
+          "title": "オフィスソフト",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "Microsoft Word （報告書・議事録作成など）",
+            "Microsoft Excel （関数、ピボットテーブル、グラフ作成など）",
+            "Microsoft PowerPoint （提案資料・プレゼン資料作成など）",
+            "Google Workspace (ドキュメント, スプレッドシート, スライド)"
+          ]
+        },
+        {
+          "title": "コミュニケーションツール",
+          "prompt": "業務で日常的に使用したことのあるものを選択してください。",
+          "items": [
+            "Slack",
+            "Microsoft Teams",
+            "Zoom",
+            "Google Meet"
+          ]
+        },
+        {
+          "title": "PC・IT基礎スキル",
+          "prompt": "当てはまるものを選択してください。",
+          "items": [
+            "Windowsの基本操作・設定ができる",
+            "macOSの基本操作・設定ができる",
+            "PCの簡単なパーツ交換（メモリ増設、ストレージ交換など）が可能",
+            "ネットワークの基礎知識（IPアドレス、DNSなど）を理解している",
+            "基本的なセキュリティ対策（パスワード管理、フィッシング対策など）を実践している"
+          ]
+        }
+      ]
+    }
+  ],
+  "selectableGroups": [
+    {
+      "id": "engineer",
+      "label": "プログラマ / ITエンジニア",
+      "description": "開発言語、フレームワーク、インフラ関連のスキル",
+      "questions": [
+        {
+          "title": "フロントエンド言語",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "HTML",
+            "CSS",
+            "Sass/SCSS",
+            "JavaScript",
+            "TypeScript"
+          ]
+        },
+        {
+          "title": "バックエンド言語",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "PHP",
+            "Ruby",
+            "Python",
+            "Java",
+            "Go"
+          ]
+        },
+        {
+          "title": "フレームワーク・ライブラリ",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "React",
+            "Vue.js",
+            "Angular",
+            "jQuery",
+            "Laravel(PHP)",
+            "Ruby on Rails(Ruby)",
+            "Django(Python)",
+            "SpringBoot(Java)"
+          ]
+        },
+        {
+          "title": "データベース",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "MySQL / MariaDB",
+            "PostgreSQL",
+            "Oracle Database",
+            "MongoDB",
+            "Redis"
+          ]
+        },
+        {
+          "title": "バージョン管理ツール",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "Git / GitHub / GitLab",
+            "Subversion (SVN)",
+            "Mercurial",
+            "Perforce"
+          ]
+        },
+        {
+          "title": "サーバーOS",
+          "prompt": "構築・運用経験のあるものを選択してください。",
+          "items": [
+            "Linux (RHEL/CentOS系)",
+            "Linux (Ubuntu/Debian系)",
+            "Windows Server"
+          ]
+        },
+        {
+          "title": "クラウドプラットフォーム",
+          "prompt": "主な業務で利用したことのあるものを選択してください。",
+          "items": [
+            "AWS (Amazon Web Services)",
+            "Microsoft Azure",
+            "GCP (Google Cloud Platform)"
+          ]
+        },
+        {
+          "title": "仮想化・コンテナ技術",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "VMware vSphere",
+            "Docker",
+            "Kubernetes"
+          ]
+        },
+        {
+          "title": "構成管理・自動化ツール",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "Ansible",
+            "Terraform",
+            "シェルスクリプト (Bashなど)"
+          ]
+        },
+        {
+          "title": "ネットワーク機器・監視ツール",
+          "prompt": "実務で設定・運用経験のあるものを選択してください。",
+          "items": [
+            "L2/L3スイッチ (Ciscoなど)",
+            "ルーター",
+            "ファイアウォール",
+            "ロードバランサー",
+            "Zabbix",
+            "Prometheus / Grafana",
+            "Datadog"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "designer",
+      "label": "デザイナー / 動画制作",
+      "description": "デザインツール、動画編集、制作スキル",
+      "questions": [
+        {
+          "title": "UI/UXデザインツール",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "Figma",
+            "Sketch",
+            "Adobe XD",
+            "Procreate (ワイヤーフレーム/ラフ作成など)"
+          ]
+        },
+        {
+          "title": "イラスト制作ツール",
+          "prompt": "主目的として使用したことのあるものを選択してください。",
+          "items": [
+            "Illustrator",
+            "Photoshop",
+            "Clip Studio Paint",
+            "Procreate"
+          ]
+        },
+        {
+          "title": "Webデザイン実装",
+          "prompt": "対応可能なものを選択してください。",
+          "items": [
+            "HTML/CSSによるコーディング",
+            "レスポンシブデザイン対応",
+            "JavaScript (jQuery含む)での簡単なインタラクション実装",
+            "WordPressのテーマ作成・カスタマイズ"
+          ]
+        },
+        {
+          "title": "DTP・印刷物デザイン",
+          "prompt": "経験のある業務を選択してください。",
+          "items": [
+            "名刺・チラシ・ポスターなどの制作",
+            "パンフレット・冊子などのページレイアウト",
+            "印刷会社への入稿データ作成",
+            "色校正（色味の確認・修正指示）の経験"
+          ]
+        },
+        {
+          "title": "動画編集ソフト",
+          "prompt": "実務で使用経験のあるものを選択してください。",
+          "items": [
+            "Adobe Premiere Pro （カット編集、テロップ入れ、整音など標準的な編集）",
+            "Adobe After Effects （モーショングラフィックス、VFX、高度なアニメーション作成）",
+            "Final Cut Pro （Mac環境での編集、カット、トランジション適用など）",
+            "DaVinci Resolve （カラーグレーディング、色調補正、編集など）",
+            "CapCut / VLLO など （スマホ・タブレット向けアプリでのショート動画作成）"
+          ]
+        },
+        {
+          "title": "動画編集スキル",
+          "prompt": "自信を持って対応できるものを選択してください。",
+          "items": [
+            "カット編集（ジェットカット、マルチカメラ編集など）",
+            "テロップ・字幕の挿入（見やすいフォント選定、装飾、タイミング調整）",
+            "BGM・効果音（SE）の選定・挿入および音量バランスの調整",
+            "モーショングラフィックスの作成（動くロゴ、タイトルアニメーションなど）",
+            "キーイング・合成処理（グリーンバック合成、マスク処理など）",
+            "カラーコレクション・カラーグレーディング（Log撮影データの編集、LUT適用など）",
+            "音声のノイズ除去・整音（環境音の低減、聞き取りやすい音声への加工）"
+          ]
+        },
+        {
+          "title": "動画制作の周辺スキル",
+          "prompt": "当てはまるものを選択してください。",
+          "items": [
+            "サムネイル画像の作成（PhotoshopやCanva等を使用し、クリック率を意識した画像が作れる）",
+            "エンコード・書き出し設定の知識（解像度、フレームレート、コーデック、ビットレートの理解）",
+            "動画の構成・台本作成（構成案の作成や、絵コンテの作成が可能）",
+            "撮影機材の基本操作（一眼レフ、照明、マイク等のセッティングと撮影）",
+            "著作権・肖像権に関する基礎知識（BGMや素材サイトの利用規約理解、権利侵害の防止）"
+          ]
+        },
+        {
+          "title": "動画ジャンル",
+          "prompt": "これまでに制作・編集経験のあるものを選択してください。",
+          "items": [
+            "YouTube動画（エンタメ、ビジネス系、Vlogなど）",
+            "ショート動画（TikTok、Instagram Reels、YouTube Shorts）",
+            "企業プロモーション・商品紹介動画",
+            "インタビュー・対談動画",
+            "イベント・ウェディングムービー",
+            "ゲーム実況動画"
+          ]
+        }
+      ]
+    }
+  ]
+}
