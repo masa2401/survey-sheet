@@ -25,6 +25,12 @@
     }
   },
   "$defs": {
+    "plainText": {
+      "$comment": "画面に表示する文字列の共通の規則（空欄、先頭・末尾の空白、制御文字を拒否する）。参照する側の description がエディタに表示されるよう、ここには description を書かない",
+      "type": "string",
+      "pattern": "^[^\\p{Cc}\\p{Zs}]([^\\p{Cc}]*[^\\p{Cc}\\p{Zs}])?$",
+      "patternErrorMessage": "空欄や、先頭・末尾の空白、改行・タブなどの制御文字は使えません。"
+    },
     "alwaysShownGroup": {
       "type": "object",
       "required": ["id", "label", "questions"],
@@ -45,7 +51,7 @@
         "description": {
           "description": "グループの説明（TOP の選択肢のカードに表示する）",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 60
         },
         "questions": { "$ref": "#/$defs/groupQuestions" }
@@ -62,7 +68,7 @@
     "groupLabel": {
       "description": "グループの名前（TOP・回答ページ・結果ページ・CSV に表示する）",
       "type": "string",
-      "minLength": 1,
+      "$ref": "#/$defs/plainText",
       "maxLength": 30
     },
     "groupQuestions": {
@@ -80,13 +86,13 @@
         "title": {
           "description": "設問の見出し",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 40
         },
         "prompt": {
           "description": "見出しの下に表示する、回答方法の案内",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 100
         },
         "items": {
@@ -96,7 +102,7 @@
           "maxItems": 20,
           "items": {
             "type": "string",
-            "minLength": 1,
+            "$ref": "#/$defs/plainText",
             "maxLength": 100
           }
         }

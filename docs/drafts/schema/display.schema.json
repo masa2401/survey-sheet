@@ -5,6 +5,14 @@
   "description": "画面の文言とアイコンの設定（書いた項目だけがアプリの既定値を上書きする、書き換えても版は変わらない）",
   "type": "object",
   "additionalProperties": false,
+  "$defs": {
+    "plainText": {
+      "$comment": "画面に表示する文字列の共通の規則（空欄、先頭・末尾の空白、制御文字を拒否する）。参照する側の description がエディタに表示されるよう、ここには description を書かない",
+      "type": "string",
+      "pattern": "^[^\\p{Cc}\\p{Zs}]([^\\p{Cc}]*[^\\p{Cc}\\p{Zs}])?$",
+      "patternErrorMessage": "空欄や、先頭・末尾の空白、改行・タブなどの制御文字は使えません。"
+    }
+  },
   "properties": {
     "$schema": {
       "description": "エディタがこのスキーマを読み込むためのパス",
@@ -13,7 +21,7 @@
     "appName": {
       "description": "アプリの名前（ヘッダーとブラウザのタブに表示する）",
       "type": "string",
-      "minLength": 1,
+      "$ref": "#/$defs/plainText",
       "maxLength": 30
     },
     "terms": {
@@ -24,13 +32,13 @@
         "sheet": {
           "description": "回答結果の呼び名で、「自分の◯◯を作成」などに使う（例：スキルシート）",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 20
         },
         "item": {
           "description": "項目の呼び名で、CSV の見出しに使う（例：スキル・技術要素）",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 20
         }
       }
@@ -43,7 +51,7 @@
         "name": {
           "description": "尺度の名前で、回答ページと CSV に使う（例：習熟度）",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 20
         },
         "levels": {
@@ -53,7 +61,7 @@
           "maxItems": 5,
           "items": {
             "type": "string",
-            "minLength": 1,
+            "$ref": "#/$defs/plainText",
             "maxLength": 30
           }
         }
@@ -67,7 +75,7 @@
         "nameLabel": {
           "description": "回答者の名前の呼び名で、結果ページの入力欄・印刷と共有の案内文・CSV に使う（例：お名前）",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 20
         }
       }
@@ -95,13 +103,13 @@
         "heading": {
           "description": "グループを選ぶ欄の見出し",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 60
         },
         "hint": {
           "description": "グループを選ぶ欄の下に表示する補足",
           "type": "string",
-          "minLength": 1,
+          "$ref": "#/$defs/plainText",
           "maxLength": 100
         }
       }
@@ -115,8 +123,8 @@
           "description": "結果の見出しで、{name} の位置に回答者の名前が入る（例：{name} 様のスキルシート）",
           "type": "string",
           "maxLength": 40,
-          "pattern": "^[^{}]*\\{name\\}[^{}]*$",
-          "patternErrorMessage": "{name} をちょうど1つ含めてください。ほかに { } は使えません。"
+          "pattern": "^[^{}\\p{Cc}]*\\{name\\}[^{}\\p{Cc}]*$",
+          "patternErrorMessage": "{name} をちょうど1つ含めてください。ほかに { } や、改行・タブなどの制御文字は使えません。"
         }
       }
     },
@@ -130,8 +138,8 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 60,
-          "pattern": "^([^{}\\\\/:*?\"<>|]|\\{name\\}|\\{date\\})+$",
-          "patternErrorMessage": "使える差し込みは {name} と {date} だけです。ファイル名に使えない文字（\\ / : * ? \" < > |）は使えません。"
+          "pattern": "^([^{}\\\\/:*?\"<>|\\p{Cc}]|\\{name\\}|\\{date\\})+$",
+          "patternErrorMessage": "使える差し込みは {name} と {date} だけです。ファイル名に使えない文字（\\ / : * ? \" < > |）や、改行・タブなどの制御文字は使えません。"
         }
       }
     }
