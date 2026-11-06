@@ -15,49 +15,62 @@
       "description": "全員が回答するグループ（TOP の選択肢には出さず、回答ページに必ず表示する）",
       "type": "array",
       "maxItems": 10,
-      "items": { "$ref": "#/$defs/group" }
+      "items": { "$ref": "#/$defs/alwaysShownGroup" }
     },
     "selectableGroups": {
       "description": "回答者が TOP で選んだときだけ表示するグループ",
       "type": "array",
       "maxItems": 10,
-      "items": { "$ref": "#/$defs/group" }
+      "items": { "$ref": "#/$defs/selectableGroup" }
     }
   },
   "$defs": {
-    "group": {
+    "alwaysShownGroup": {
       "type": "object",
       "required": ["id", "label", "questions"],
       "additionalProperties": false,
       "properties": {
-        "id": {
-          "description": "グループの識別子（display.json のアイコンから参照する、2つの配列をまたいで重複させない）",
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 32,
-          "pattern": "^[a-z][a-z0-9-]*$",
-          "patternErrorMessage": "小文字の英字で始め、小文字の英数字とハイフン（-）だけを使ってください。"
-        },
-        "label": {
-          "description": "グループの名前（TOP・回答ページ・結果ページ・CSV に表示する）",
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 30
-        },
+        "id": { "$ref": "#/$defs/groupId" },
+        "label": { "$ref": "#/$defs/groupLabel" },
+        "questions": { "$ref": "#/$defs/groupQuestions" }
+      }
+    },
+    "selectableGroup": {
+      "type": "object",
+      "required": ["id", "label", "questions"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/groupId" },
+        "label": { "$ref": "#/$defs/groupLabel" },
         "description": {
           "description": "グループの説明（TOP の選択肢のカードに表示する）",
           "type": "string",
           "minLength": 1,
           "maxLength": 60
         },
-        "questions": {
-          "description": "設問（書いた順に番号が振られる）",
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 30,
-          "items": { "$ref": "#/$defs/question" }
-        }
+        "questions": { "$ref": "#/$defs/groupQuestions" }
       }
+    },
+    "groupId": {
+      "description": "グループの識別子（display.json のアイコンから参照する、2つの配列をまたいで重複させない）",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "patternErrorMessage": "小文字英字で始め、以降は小文字英数字とハイフンが使えます。ハイフンは末尾や連続では使えません。"
+    },
+    "groupLabel": {
+      "description": "グループの名前（TOP・回答ページ・結果ページ・CSV に表示する）",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 30
+    },
+    "groupQuestions": {
+      "description": "設問（書いた順に番号が振られる）",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 30,
+      "items": { "$ref": "#/$defs/question" }
     },
     "question": {
       "type": "object",

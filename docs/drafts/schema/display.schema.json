@@ -76,7 +76,8 @@
       "description": "グループの id とアイコンの対応（書いていないグループにはアイコンを表示しない）",
       "type": "object",
       "propertyNames": {
-        "pattern": "^[a-z][a-z0-9-]*$"
+        "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+        "patternErrorMessage": "小文字英字で始め、以降は小文字英数字とハイフンが使えます。ハイフンは末尾や連続では使えません。"
       },
       "additionalProperties": {
         "description": "Lucide のアイコン名（例：monitor）か、icons フォルダに置いた SVG（例：custom/my-icon.svg）",

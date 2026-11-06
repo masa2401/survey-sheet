@@ -1,13 +1,13 @@
 # 引き継ぎ
 
-最終更新：2026-11-05
+最終更新：2026-11-06
 
 ## 現在地
 
 段階2（設問の定義の形と、JSON Schema の作成）を検討中。\
 設定ファイルの分け方・形式・グループの構造・アイコン・`id` の扱い・回答者の名前・文言の既定値・\
-検証の分担（スキーマとバックエンドのコード）・`display.json` の扱い・名前・上限・DB の作り直しは\
-決定済み（`docs/DECISIONS.md`）。\
+検証の分担（スキーマとバックエンドのコード）・`display.json` の扱い・名前・上限・DB の作り直し・\
+グループの `id` の形・`description` を書けるグループは決定済み（`docs/DECISIONS.md`）。\
 仮のスキーマとスキルシートのサンプルは `docs/drafts/` に仮置きしている。\
 置き場所（次の作業の 8）が決まったら移す。
 
@@ -51,6 +51,11 @@
 `AnswerItem.vue`（習熟度）、`csvUtils.ts`（CSV の見出し・ファイル名）、\
 `ResultPage.vue`（見出し・ボタン・エラー文）、`TopPage.vue`（見出し）、\
 `EditableNameHeading.vue`（ラベル・見出し）、`TheHeader.vue`（アプリ名）
+
+## 段階3で行うこと（決定済み）
+
+- `TopPage.vue`：グループの `description` が無いときは、説明の `<p>` と `aria-describedby` を出さない。\
+  `selectableGroups` の `description` を任意にしたため（今は常に出している）。
 
 ## 未着手の整理
 
