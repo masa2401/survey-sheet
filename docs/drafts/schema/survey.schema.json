@@ -66,7 +66,7 @@
       "patternErrorMessage": "小文字英字で始め、以降は小文字英数字とハイフンが使えます。ハイフンは末尾や連続では使えません。"
     },
     "groupLabel": {
-      "description": "グループの名前（TOP・回答ページ・結果ページ・CSV に表示する）",
+      "description": "グループの名前（TOP・回答ページ・結果ページ・CSV に表示する、2つの配列をまたいで重複させない）",
       "type": "string",
       "$ref": "#/$defs/plainText",
       "maxLength": 30
@@ -84,7 +84,7 @@
       "additionalProperties": false,
       "properties": {
         "title": {
-          "description": "設問の見出し",
+          "description": "設問の見出し（同じグループの中で重複させない）",
           "type": "string",
           "$ref": "#/$defs/plainText",
           "maxLength": 40
@@ -96,10 +96,11 @@
           "maxLength": 100
         },
         "items": {
-          "description": "回答者がチェックして5段階で評価する項目（書いた順に番号が振られる）",
+          "description": "回答者がチェックして5段階で評価する項目（書いた順に番号が振られる、同じ設問の中で重複させない）",
           "type": "array",
           "minItems": 1,
           "maxItems": 20,
+          "uniqueItems": true,
           "items": {
             "type": "string",
             "$ref": "#/$defs/plainText",
