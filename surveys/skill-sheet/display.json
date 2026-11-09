@@ -1,5 +1,5 @@
 {
-  "$schema": "./schema/display.schema.json",
+  "$schema": "../../schema/display.schema.json",
   "appName": "スキルシート作成ページ",
   "terms": {
     "sheet": "スキルシート",

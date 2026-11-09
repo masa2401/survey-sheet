@@ -1,5 +1,5 @@
 {
-  "$schema": "./schema/survey.schema.json",
+  "$schema": "../../schema/survey.schema.json",
   "alwaysShownGroups": [
     {
       "id": "common",

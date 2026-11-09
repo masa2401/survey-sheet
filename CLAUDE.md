@@ -13,6 +13,8 @@
 | `vue-frontend/` | Vue 3、TypeScript、shadcn-vue（Reka UI）、Tailwind v4、Pinia、Vite |
 | `spring-backend/` | Spring Boot（Java 25）、PostgreSQL、Flyway |
 | `aws-lambda/` | PDF 生成（Puppeteer、コンテナイメージ） |
+| `schema/` | 設問の定義と表示設定の JSON Schema |
+| `surveys/` | 設問の定義と表示設定（1つのアンケートを1つのフォルダに置く。今はスキルシートのサンプルだけ） |
 | `docs/` | 方針・決定事項・引き継ぎ |
 
 ## コマンド
@@ -44,6 +46,8 @@ Node と Java のバージョンは `.nvmrc` と `.java-version` に従う。
 - 事実が不明な点は推測で補わず、確認する。
 - インフラやシェルのコマンドは、動作を確かめた形で提示する。
 - 作業の区切りでは、`docs/HANDOFF.md` の更新案を出す。
+- 画面は日本語の固定の文言で実装している。\
+  多言語対応のときに苦労しそうな箇所があれば、その都度指摘する。
 
 設計判断は、理由があれば見直しを提案してよい。\
 ただし次の2点は維持する。
