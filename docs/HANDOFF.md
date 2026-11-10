@@ -4,22 +4,61 @@
 
 ## 現在地
 
-- 段階2（設問の定義の形と、JSON Schema の作成）の検討は完了し、スキーマとサンプルに反映済み
-- スキーマは `schema/`、スキルシートのサンプルは `surveys/skill-sheet/` にある
+- 段階2（設問の定義の形と、JSON Schema の作成）は完了し、`main` にマージ済み（#3）
+  - スキーマは `schema/`、スキルシートのサンプルは `surveys/skill-sheet/` にある
+  - VS Code でのスキーマのキーワードの効き方も確認済み
+- 段階3と4をまとめて検討している。実装は、バックエンドの定義の API を先に作る
+- 定義の API の形は、アイコンと印のキーの名前を除いて決定済み（`DECISIONS.md` の「定義の API」）
 - アプリの中身は、移行前のスキルシート作成アプリのまま
 - `deploy.yml` は手動実行のみ。本番のデプロイ先は未設定
 - `main` はブランチ保護済み（PR 必須、必須チェックは `ci-result`）
 - Dependabot は alerts と security updates を有効にしている。version updates は GitHub Actions だけ（`dependabot.yml`）
 
-## 次の作業
+## 完成形のイメージ（段階4を終えた時点）
 
-1. VS Code でスキーマのキーワードが効くかを確かめる
-   - `$ref` と並べたキーワード（`maxLength`）
-   - `additionalProperties`、`uniqueItems`、`propertyNames`
-   - `maxLength` の数え方（`𠮷` や絵文字を1文字と数えるか）
-   - 配列の `minItems`・`maxItems`（`top.banner`）
-   - Ajv（Draft 2020-12、strict モード）では確認済み
-2. 段階3に進む
+- バックエンドは起動時に `SURVEY_DIR` の `survey.json` と `display.json` を読んで検証し、番号を振って版を計算し、メモリに持つ
+- 定義の API は、メモリに持った内容を返すだけ
+- シートの API は、名前と、選ばれたグループの回答（番号と値）を保存・読み出しする
+- DB には回答の番号と値だけを保存する
+- フロントは画面を開いたときに定義の API を読み、定義から画面を組み立てる。定義と回答の結合（`useMergedSurvey.ts`）と CSV の作成はフロントで行う
+
+## 次の作業：段階3・4の検討の続き
+
+1つずつ、上から順に決める。
+
+1. シートの保存・読み出しの API
+   1. グループを数値と文字列のどちらで識別するか
+      - DB の `sheet_categories.category_id`（今は integer）の型も、ここで決まる
+      - 数値にする場合は、定義の API のグループにも番号を足す
+   2. 版の扱い（保存時に送るか、DB に持たせるか、読み出したシートの版が今と違うときの応答）
+   3. 保存時に、送られてきた番号が定義にあるかを確かめるか（今は確かめていない）
+   4. DTO の件数の上限（今はカテゴリ10・設問30・回答30）を、定義の上限（グループ10・設問30・項目20）に合わせるか
+   5. 読み出しの順序
+      - 未決事項の案は「定義の順で返す」
+      - `SheetCategoryRepository.findWithAnswersBySheetId` に `ORDER BY` が無く、`SkillSheetService.buildQuestions` は `Collectors.groupingBy`（`HashMap`）でまとめている
+      - 一方で、共有ビューは `ResultPage.vue:55` で `normalizeSurveyState` を通し、定義の順に並べ直している。バックエンドで順序を保証する必要があるかを確かめる
+   6. API のキーの名前（`categoryId`・`answerId` などを `groups`・`items` に合わせるか）
+2. フロントの読み込みと状態
+   - 読み込みを待つ場所（`main.ts` で待ってから `app.mount()` するか、マウントしてから `App.vue` で読み込み中を出すか）
+   - 読み込みに失敗したときの表示
+   - ストアの初期化（今はストアを作るときに `buildInitialSelections()` で組み立て、`pinia-plugin-persistedstate` でブラウザに保存している。定義が届いてから組み立てる形と、保存された状態の版の確認をどこに置くか）
+   - アプリの中の型（API の形をそのまま使うか、今の `CategoryMaster`・`Merged*` に変換するか）
+   - `index.html` の `<title>`：読み込むまでの間に出す文字列
+   - PDF：Lambda は結果ページの `data-pdf-ready` を待って印刷している（`aws-lambda/src/index.ts:105`）。定義の読み込みより後に付くかを確かめる
+3. 定義の API の残り
+   - 全員が回答するグループかの印のキーの名前
+   - アイコンの渡し方と配信（Lucide の SVG をどこから配信するか、API が返すのは名前か URL か）
+4. バックエンドの内部
+   - Spring Boot 版で `schema/` を取り込む方法（`spring-backend/` の外にある。Maven のリソースにできるか、Docker のビルドの `context`（`./spring-backend`）から見えるかは未確認）
+   - 開発環境で `surveys/` を読ませる方法（`docker-compose.yml` のバックエンドは `./spring-backend` だけをマウントしている。`surveys/` のマウントと `SURVEY_DIR` の設定が要る）
+   - Java の検証ライブラリ（未決事項の「スキーマのライブラリを選ぶとき」）
+
+次のものは、フロントの作りに影響しないため、段階4の実装のときに決める。
+
+- エンドポイントのパス
+- エラーの応答の形（今は `ProblemDetail`）
+- `shareToken` の列の扱い
+- 保存の DB との往復の削減
 
 ## 段階3で行うこと
 
@@ -42,10 +81,7 @@
   - 看板か選ぶ欄の、どちらかは必ず表示する（看板が無いときの扱いは実装時に決める）
 - 回答ページ（`/survey`）：表示するグループが無いときは TOP へ移すガードを足す（`router/index.ts`）
 - グループの並び順を、全画面・CSV・PDF で揃える
-- `index.html` の `<title>`：表示設定を読み込むまでの間に出す文字列を決める
 - 全員が回答するグループが0件の定義を使うテストを足す
-- フロントが定義をどう読むかを決める（バックエンドの API ができる前の段階）
-  - `surveys/` を読む場合は、コンテナへのマウント（今の `docker-compose.yml` は `./vue-frontend` だけ）と、Vite の設定（`vue-frontend/` の外のファイルを読めるか）を確かめる
 
 ## 段階4以降で行うこと
 
@@ -71,7 +107,7 @@
   - 今は代わりにクエリ方式の URL をコピーしている（`ShareUrlButton.vue`）
   - 案：ボタンにエラーを表示し、やり直せるようにする
 - クエリ方式の共有を削除する時期
-  - 案：段階4（e2e をバックエンドありの形に変えるとき）で削除し、`isBackendEnabled()` の整理は段階5で行う
+  - フロントが定義を API から読むようになると、バックエンドなしでは画面を組み立てられなくなる。その時点で、`isBackendEnabled()` の整理とあわせて扱いを決める
   - `isBackendEnabled()` は、PDF ボタンの表示（`ShareButton.vue`）や `api.ts` でも使っている
   - 削除の対象：`shareUtils.ts` の圧縮・展開、`lz-string`、`ResultPage.vue` と `router/index.ts` の `data=`、関連するテスト、e2e の `share.spec.ts` と `e2e/pages/ResultPage.ts` の `data=` の扱い
 - Spring Boot 版と Go 版で検証の規則を揃える方法
@@ -80,11 +116,6 @@
   - 規則を1つずつすべて試す（`alwaysShownGroups` 0件・`selectableGroups` 1件の形も入れる）
   - 期待するエラーは順序によらずに比べる
   - 置き場所は作るときに決める（`SURVEY_DIR` で切り替えて読む案）
-- 保存したシートを読み出すとき、グループ・設問・項目を定義の順で返す（段階4で作り直すとき）
-  - フロントは API の順序のまま並べる（`sheetMapper.ts` の `toSurveyState`）
-  - グループ：`SheetCategoryRepository.findWithAnswersBySheetId` のクエリに `ORDER BY` が無い
-  - 設問：`SkillSheetService.buildQuestions` が `Collectors.groupingBy`（内部は `HashMap`）でまとめている
-  - 案：順序を保つ形（`ORDER BY`、`LinkedHashMap`、番号で並べ替える）にするか、読み込んだ定義の順で並べ直して返す
 - 保存の DB との往復の削減（JDBC のバッチ、連番をまとめて取得する設定）
   - 必要になったら段階4で検討する
   - Go 版では、最初から複数行をまとめて INSERT する書き方にする
