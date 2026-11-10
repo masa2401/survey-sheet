@@ -1,0 +1,29 @@
+{
+  "$schema": "../../schema/display.schema.json",
+  "appName": "スキルシート作成ページ",
+  "scale": {
+    "name": "習熟度",
+    "levels": [
+      "習得が不十分な状態",
+      "基礎はあるが不安定",
+      "期待どおりにできる",
+      "期待以上の成果を出す",
+      "卓越したレベルで発揮する"
+    ]
+  },
+  "groupIcons": {
+    "common": "briefcase",
+    "engineer": "monitor",
+    "designer": "palette"
+  },
+  "top": {
+    "heading": "該当するカテゴリを選択してください(複数選択可)"
+  },
+  "result": {
+    "heading": "{name} 様のスキルシート"
+  },
+  "csv": {
+    "fileName": "{name}様_スキルシート_{date}",
+    "itemHeading": "スキル・技術要素"
+  }
+}
