@@ -24,25 +24,6 @@
       "$ref": "#/$defs/plainText",
       "maxLength": 30
     },
-    "terms": {
-      "description": "画面の文言に埋め込む名詞",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "sheet": {
-          "description": "回答結果の呼び名で、「自分の◯◯を作成」などに使う（例：スキルシート）",
-          "type": "string",
-          "$ref": "#/$defs/plainText",
-          "maxLength": 20
-        },
-        "item": {
-          "description": "項目の呼び名で、CSV の見出しに使う（例：スキル・技術要素）",
-          "type": "string",
-          "$ref": "#/$defs/plainText",
-          "maxLength": 20
-        }
-      }
-    },
     "scale": {
       "description": "5段階の尺度",
       "type": "object",
@@ -67,19 +48,6 @@
         }
       }
     },
-    "respondent": {
-      "description": "回答者に関わる文言",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "nameLabel": {
-          "description": "回答者の名前の呼び名で、結果ページの入力欄・印刷と共有の案内文・CSV に使う（例：お名前）",
-          "type": "string",
-          "$ref": "#/$defs/plainText",
-          "maxLength": 20
-        }
-      }
-    },
     "groupIcons": {
       "description": "グループの id とアイコンの対応（書いていないグループにはアイコンを表示しない）",
       "type": "object",
@@ -100,17 +68,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "banner": {
+          "description": "TOP の上部に表示する看板で、アプリの使い方などを段落ごとに書く（書いたときだけ表示する）",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "string",
+            "$ref": "#/$defs/plainText",
+            "maxLength": 40
+          }
+        },
         "heading": {
-          "description": "グループを選ぶ欄の見出し",
+          "description": "グループを選ぶ欄の見出し（書かない場合は、選べるグループの件数に合う既定の文を使う）",
           "type": "string",
           "$ref": "#/$defs/plainText",
           "maxLength": 60
-        },
-        "hint": {
-          "description": "グループを選ぶ欄の下に表示する補足",
-          "type": "string",
-          "$ref": "#/$defs/plainText",
-          "maxLength": 100
         }
       }
     },
@@ -140,6 +113,12 @@
           "maxLength": 60,
           "pattern": "^([^{}\\\\/:*?\"<>|\\p{Cc}]|\\{name\\}|\\{date\\})+$",
           "patternErrorMessage": "使える差し込みは {name} と {date} だけです。ファイル名に使えない文字（\\ / : * ? \" < > |）や、改行・タブなどの制御文字は使えません。"
+        },
+        "itemHeading": {
+          "description": "表の項目の列の見出し（例：スキル・技術要素）",
+          "type": "string",
+          "$ref": "#/$defs/plainText",
+          "maxLength": 20
         }
       }
     }

@@ -1,10 +1,6 @@
 {
   "$schema": "../../schema/display.schema.json",
   "appName": "スキルシート作成ページ",
-  "terms": {
-    "sheet": "スキルシート",
-    "item": "スキル・技術要素"
-  },
   "scale": {
     "name": "習熟度",
     "levels": [
@@ -15,22 +11,19 @@
       "卓越したレベルで発揮する"
     ]
   },
-  "respondent": {
-    "nameLabel": "お名前"
-  },
   "groupIcons": {
     "common": "briefcase",
     "engineer": "monitor",
     "designer": "palette"
   },
   "top": {
-    "heading": "該当するカテゴリを選択してください(複数選択可)",
-    "hint": "どちらも選択しない場合は、共通の質問のみ表示されます"
+    "heading": "該当するカテゴリを選択してください(複数選択可)"
   },
   "result": {
     "heading": "{name} 様のスキルシート"
   },
   "csv": {
-    "fileName": "{name}様_スキルシート_{date}"
+    "fileName": "{name}様_スキルシート_{date}",
+    "itemHeading": "スキル・技術要素"
   }
 }

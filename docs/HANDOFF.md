@@ -1,15 +1,14 @@
 # 引き継ぎ
 
-最終更新：2026-11-09
+最終更新：2026-11-10
 
 ## 現在地
 
-段階2（設問の定義の形と、JSON Schema の作成）を検討中。\
-残っている検討は、表示設定で入れ替える名詞と、既定値の文言（次の作業の 1）だけ。\
-ほかは決定済み（`docs/DECISIONS.md`）。最近決めたもの：エラーメッセージの場所、スキーマの版、TOP の挙動、\
-グループの並び順、画面の言語、定義ファイルの置き場所。\
-スキーマは `schema/`、スキルシートのサンプルは `surveys/skill-sheet/` に置いた。\
-次の作業の 1 を反映するまでは仮の内容（看板などの項目がまだ無い）。
+段階2（設問の定義の形と、JSON Schema の作成）の検討は完了し、スキーマとサンプルに反映済み。\
+残りは、VS Code でスキーマのキーワードが効くかの確認だけ。\
+最近決めたもの：固定の文言と表示設定の項目（`docs/DECISIONS.md` の 2026-11-09 の節）。\
+`terms`・`respondent.nameLabel`・`top.hint` を削除し、`csv.itemHeading` と `top.banner` を足した。\
+スキーマは `schema/`、スキルシートのサンプルは `surveys/skill-sheet/` に置いている。
 
 - `deploy.yml` は手動実行のみ。本番のデプロイ先は未設定。
 - `main` はブランチ保護済み（PR 必須、必須チェックは `ci-result`）。
@@ -19,38 +18,50 @@
 
 ## 次の作業
 
-1. 表示設定で入れ替える名詞の一覧と、汎用的な既定値の文言を決める。\
-   固定の文言を洗い出して決める。一緒に決めること：
-   - 固定の文言を、キーと文言の対応表（1つのファイル）にまとめるか。\
-     コンポーネントの中で組み立てるより、多言語対応のときに言語ごとの対応表を足す形にしやすい。\
-     vue-i18n などのライブラリは入れず、対応表だけを作る案。
-   - `top.hint` の既定値を、グループの件数の組み合わせで切り替えるか。\
-     `alwaysShownGroups` が0件のときは「1つ以上選んでください」のような文にする。\
-     開始ボタンの理由をツールチップだけで伝えると、タッチ操作の端末では開けないため、この文で常に伝える案。
-   - `top.heading` の「（複数選択可）」が、選べるグループが1件のときに合わない。
-   - 看板の項目（キーの名前、件数・文字数の上限）。案：`top.banner` に `heading` と `paragraphs`（段落の配列）。
-
-   固定の文言のうち、スキルシート固有の言葉を含むものの例：\
-   `AnswerItem.vue`（習熟度）、`csvUtils.ts`（CSV の見出し・ファイル名）、\
-   `ResultPage.vue`（見出し・ボタン・エラー文）、`TopPage.vue`（見出し・補足の文）、`SurveyPage.vue`（案内文）、\
-   `EditableNameHeading.vue`（ラベル・見出し）、`TheHeader.vue`（アプリ名）
-2. 1 の決定をスキーマとサンプルに反映し、VS Code でキーワードが効くかを確かめる。\
+1. VS Code でスキーマのキーワードが効くかを確かめる。\
    確かめること：`$ref` と並べたキーワード（`maxLength`）、`additionalProperties`、`uniqueItems`、\
-   `propertyNames`、`maxLength` の数え方（`𠮷` や絵文字を1文字と数えるか）。
+   `propertyNames`、`maxLength` の数え方（`𠮷` や絵文字を1文字と数えるか）、配列の `minItems`・`maxItems`（`top.banner`）。\
+   Ajv（Draft 2020-12、strict モード）では、サンプルが通ることと、削除した項目・看板の上限の違反がエラーになることを確認済み。
+2. 段階3に進む。
 
 ## 段階3で行うこと（決定済み）
 
+- 固定の文言を `src/data/texts.ts`（文面の一覧）に移し、`composables/useTexts.ts` で表示設定の差し込みと既定値の適用を行う。\
+  対象は画面に出る文字と `aria-label`（ログと画面に出ない `Error` の文は除く）。\
+  `constants.ts` の `LEVEL_LABELS` の説明は `scale.levels` に置き換わる（星の文字列は残る）。\
+  `csvUtils.ts` は、完成したファイル名・見出しを引数で受け取る形にする（`csvUtils.test.ts` の呼び出しの修正が要る）。
+- 文面の変更とテストへの影響（文面は DECISIONS の 2026-11-09 の節）
+  - 「お名前」→「名前」：`EditableNameHeading.vue:23, 119`、`useGuestGate.ts:6`。\
+    テスト：`EditableNameHeading.test.ts:12, 14`、e2e の `share.spec.ts:175`、`pages/ResultPage.ts:20`（ロケーター）。
+  - 共有ビューのボタン「自分もアンケートに答える」（`ResultPage.vue:254`）。\
+    テスト：`App.test.ts:107`、`ResultPage.test.ts:213, 218, 277, 284`。e2e への影響は無い。
+  - リンク切れの文（`ResultPage.vue:124`）、CSV の1行目「名前」（`csvUtils.ts:11`）。テストの修正は不要。
+  - スキルシートのサンプルは結果の見出し・ファイル名の文面が変わらないので、`様のスキルシート` を見ているテストはそのまま。
 - `TopPage.vue`：グループの `description` が無いときは、説明の `<p>` と `aria-describedby` を出さない。\
   `selectableGroups` の `description` を任意にしたため（今は常に出している）。
-- TOP：`selectableGroups` が0件なら選ぶ欄を出さない。`alwaysShownGroups` が0件なら、\
-  1つ以上選ぶまで開始ボタンを `aria-disabled` にする（`AnimatedIconButton.vue` の `inactive`）。
-- TOP：表示設定に書いたときに看板を出す。看板か選ぶ欄の、どちらかは必ず表示する\
-  （看板を書かなかったときの扱いは、実装のときに決める）。
+- TOP：`selectableGroups` が0件なら選ぶ欄を出さない。選ぶ欄の見出しの既定値と補足は、件数で切り替える。
+- TOP：`alwaysShownGroups` が0件なら、1つ以上選ぶまで開始ボタンを `aria-disabled` にする（`AnimatedIconButton.vue` の `inactive`）。\
+  `ShareButton.vue` の名前が未入力のときと同じく、ツールチップで理由を示し、押したら1枚目のカードへフォーカスを移す。\
+  カードのフォーカスの枠は `has-[:focus-visible]` なので、マウスやタップの後にプログラムからフォーカスすると出ない可能性がある。\
+  実機で確かめ、出なければ押したときにカードを短く強調するなどで補う。
+- TOP：`top.banner` を書いたときに看板を出す。看板か選ぶ欄の、どちらかは必ず表示する\
+  （看板を書かなかったときの扱いは、実装のときに決める）。\
+  本文を `text-sm`（14px）にすると、上限いっぱいでも iPhone SE でカードの先頭が最初の画面に入る（測定値）。
+- `index.html` の `<title>`：表示設定を読み込むまでの間に出す文字列を決める。
+- 全員が回答するグループが0件の定義を使うテストを足す（開始ボタンの無効とツールチップ、補足を出さないこと）。
 - 回答ページ（`/survey`）：表示するグループが無いときは TOP へ移すガードを足す（`router/index.ts`）。
 - グループの並び順：`alwaysShownGroups` → `selectableGroups`、それぞれ定義の順。全画面・CSV・PDF で揃える。
 - フロントが定義をどう読むかを決める（バックエンドの API ができる前の段階）。\
   `surveys/` を読む場合は、コンテナへのマウント（今の `docker-compose.yml` は `./vue-frontend` だけ）と、\
   Vite の設定（`vue-frontend/` の外のファイルを読めるか）を確かめる。
+
+## 段階4以降で行うこと（決定済み）
+
+- 起動時の検証に、`alwaysShownGroups` が0件で `selectableGroups` が1件の定義をエラーにする規則を足す（段階4）。\
+  両方0件の規則と同じく、配列をまたぐのでコードで確かめる。共用するテスト用の定義にも、この形を入れる。
+- `SaveRateLimiter.java:50` の文から「スキルシート」を外す（段階4で作り直すとき。今のフロントはこの本文を表示していない）。
+- `aws-lambda/src/index.ts:58` の `filename="skillsheet.pdf"` を汎用の名前にする（段階5）。
+- `TheFooter.vue` の GitHub のリンク先が旧リポジトリ（`FullStack-CreateSkillSheet`）のまま。配布時に差し替える（段階8）。
 
 ## 未着手の整理
 
