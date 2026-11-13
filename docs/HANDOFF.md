@@ -1,6 +1,6 @@
 # 引き継ぎ
 
-最終更新：2026-11-10
+最終更新：2026-11-12
 
 ## 現在地
 
@@ -9,6 +9,8 @@
   - VS Code でのスキーマのキーワードの効き方も確認済み
 - 段階3と4をまとめて検討している。実装は、バックエンドの定義の API を先に作る
 - 定義の API の形は、アイコンと印のキーの名前を除いて決定済み（`DECISIONS.md` の「定義の API」）
+- シートの API は、グループの識別子と版の扱いまで決定済み（`DECISIONS.md` の「シートの API」）
+- PDF の構成は、描画役・保存先・状態の持ち方・生成のきっかけまで決定済み（`DECISIONS.md` の「PDF 生成」）
 - アプリの中身は、移行前のスキルシート作成アプリのまま
 - `deploy.yml` は手動実行のみ。本番のデプロイ先は未設定
 - `main` はブランチ保護済み（PR 必須、必須チェックは `ci-result`）
@@ -26,29 +28,31 @@
 
 1つずつ、上から順に決める。
 
-1. シートの保存・読み出しの API
-   1. グループを数値と文字列のどちらで識別するか
-      - DB の `sheet_categories.category_id`（今は integer）の型も、ここで決まる
-      - 数値にする場合は、定義の API のグループにも番号を足す
-   2. 版の扱い（保存時に送るか、DB に持たせるか、読み出したシートの版が今と違うときの応答）
-   3. 保存時に、送られてきた番号が定義にあるかを確かめるか（今は確かめていない）
-   4. DTO の件数の上限（今はカテゴリ10・設問30・回答30）を、定義の上限（グループ10・設問30・項目20）に合わせるか
-   5. 読み出しの順序
+1. PDF の残り
+   1. 二重の生成の防止と、描画役に同時に頼む数の上限
+      - 今は `LambdaPdfService` の `lastInvokedAt` で、直近の Invoke から15秒以内の `regenerate` を止めている
+   2. `/status` でシートの有無・期限・版を確かめるか
+      - 今は確かめず、PDF があれば返している（`PdfController.status`）
+   3. PDF 用のコンテナの描画役を何にするか（既製のものか、`aws-lambda/` の処理をもとに自前で作るか）
+2. シートの保存・読み出しの API
+   1. 保存時に、送られてきた番号が定義にあるかを確かめるか（今は確かめていない）
+   2. DTO の件数の上限（今はカテゴリ10・設問30・回答30）を、定義の上限（グループ10・設問30・項目20）に合わせるか
+   3. 読み出しの順序
       - 未決事項の案は「定義の順で返す」
       - `SheetCategoryRepository.findWithAnswersBySheetId` に `ORDER BY` が無く、`SkillSheetService.buildQuestions` は `Collectors.groupingBy`（`HashMap`）でまとめている
       - 一方で、共有ビューは `ResultPage.vue:55` で `normalizeSurveyState` を通し、定義の順に並べ直している。バックエンドで順序を保証する必要があるかを確かめる
-   6. API のキーの名前（`categoryId`・`answerId` などを `groups`・`items` に合わせるか）
-2. フロントの読み込みと状態
+   4. API のキーの名前（`categoryId`・`answerId` などを `groups`・`items` に合わせるか）
+3. フロントの読み込みと状態
    - 読み込みを待つ場所（`main.ts` で待ってから `app.mount()` するか、マウントしてから `App.vue` で読み込み中を出すか）
    - 読み込みに失敗したときの表示
    - ストアの初期化（今はストアを作るときに `buildInitialSelections()` で組み立て、`pinia-plugin-persistedstate` でブラウザに保存している。定義が届いてから組み立てる形と、保存された状態の版の確認をどこに置くか）
    - アプリの中の型（API の形をそのまま使うか、今の `CategoryMaster`・`Merged*` に変換するか）
    - `index.html` の `<title>`：読み込むまでの間に出す文字列
-   - PDF：Lambda は結果ページの `data-pdf-ready` を待って印刷している（`aws-lambda/src/index.ts:105`）。定義の読み込みより後に付くかを確かめる
-3. 定義の API の残り
+   - PDF：描画役は結果ページの `data-pdf-ready` を待って印刷している（`aws-lambda/src/index.ts:105`）。定義の読み込みより後に付くかを確かめる
+4. 定義の API の残り
    - 全員が回答するグループかの印のキーの名前
    - アイコンの渡し方と配信（Lucide の SVG をどこから配信するか、API が返すのは名前か URL か）
-4. バックエンドの内部
+5. バックエンドの内部
    - Spring Boot 版で `schema/` を取り込む方法（`spring-backend/` の外にある。Maven のリソースにできるか、Docker のビルドの `context`（`./spring-backend`）から見えるかは未確認）
    - 開発環境で `surveys/` を読ませる方法（`docker-compose.yml` のバックエンドは `./spring-backend` だけをマウントしている。`surveys/` のマウントと `SURVEY_DIR` の設定が要る）
    - Java の検証ライブラリ（未決事項の「スキーマのライブラリを選ぶとき」）
@@ -56,9 +60,16 @@
 次のものは、フロントの作りに影響しないため、段階4の実装のときに決める。
 
 - エンドポイントのパス
-- エラーの応答の形（今は `ProblemDetail`）
+- エラーの応答の形（今は `ProblemDetail`）。版が違うときの応答のステータスコードと本文も、ここで決める
 - `shareToken` の列の扱い
 - 保存の DB との往復の削減
+
+実装のときに確かめること。
+
+- `ddl-auto=validate` で、`String` の項目と `text` の列の照合が通るか
+- 描画役を待つ時間の上限（SDK と HTTP クライアントの読み取りのタイムアウト）を、Lambda のタイムアウト（30秒）より長くする
+- PDF の失敗の記録を消す時期（再試行のときと、残った記録の定期削除）
+- フロントの60秒の打ち切りは、`/status` が failed を返すようになっても、受け皿として残す
 
 ## 段階3で行うこと
 
@@ -87,7 +98,10 @@
 
 - 起動時の検証に、`alwaysShownGroups` が0件で `selectableGroups` が1件の定義をエラーにする規則を足す（段階4）
 - `SaveRateLimiter.java:50` の文から「スキルシート」を外す（段階4）
-- `aws-lambda/src/index.ts:58` の `filename="skillsheet.pdf"` を汎用の名前にする（段階5）
+- V1 を作り直すときに、ほかの文字列の列（`user_name` の `varchar(255)` など）の型も見直す（段階4）
+- PDF のファイル名の指定（`Content-Disposition`）を、Lambda（`aws-lambda/src/index.ts:58`）からバックエンドのダウンロード用のエンドポイントに移し、`filename="skillsheet.pdf"` を汎用の名前にする（段階5）
+- 描画役を作り直すときに、`page.pdf()` の `printBackground: true` を外す（段階5）
+- 開発環境の `docker-compose.yml` に PDF 用のコンテナを足す（段階5）
 - `TheFooter.vue` の GitHub のリンク先（旧リポジトリ `FullStack-CreateSkillSheet`）を差し替える（段階8）
 
 ## 未着手の整理
