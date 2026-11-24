@@ -1,6 +1,6 @@
 # 引き継ぎ
 
-最終更新：2026-11-20
+最終更新：2026-11-24
 
 ## 現在地
 
@@ -11,11 +11,12 @@
 - 役割分担の方針（フロントは表示と状態の管理だけ。`ROADMAP.md` の「役割分担」）が決まった
 - 決定済み（`DECISIONS.md`）
   - 定義の API の形（アイコンと印のキーの名前を除く）。表示設定は既定値を当てて返す
-  - シートの API と DB の形。シートは、回答したときの文言つきの回答を jsonb で1行に持つ
-  - PDF の構成。描画役は Gotenberg（Lambda は仮決定）
+  - シートの API と DB の形（組み立て・URL 共有・PDF 生成・CSV・読み出し、冪等キー、エラーの見分け方、回数制限）
+  - 自分の結果ページの流れ（組み立ての API で表示し、URL 共有・PDF・CSV を押したときに保存する）
+  - PDF の構成。描画役は Gotenberg（Lambda は仮決定）。生成は PDF のボタンを押したときに始める
   - フロントの読み込みと状態（読み込みの場所、失敗したときの表示、定義の API の応答の置き場所、回答の状態の形、版の確認）
   - CSV はバックエンドで作る
-- 下書き案（下の「次の作業」）は、まだ検討中
+- API の形とデータの持ち方に関わる検討は、ひととおり終わった
 - アプリの中身は、移行前のスキルシート作成アプリのまま
 - `deploy.yml` は手動実行のみ。本番のデプロイ先は未設定
 - `main` はブランチ保護済み（PR 必須、必須チェックは `ci-result`）
@@ -25,42 +26,19 @@
 
 - バックエンドは起動時に `SURVEY_DIR` の `survey.json` と `display.json` を読んで検証し、番号を振り、版を計算し、表示設定に既定値を当てて、メモリに持つ
 - 定義の API は、メモリに持った内容を返すだけ
-- シートは、バックエンドがメモリの定義から文言を引いて、文言つきの回答を組み立てて保存する。共有ビューと PDF は、それをそのまま表示する
-- CSV は、バックエンドが保存したシートから作る
 - フロントは `main.ts` で定義の API を読み、`utils/definition.ts` に入れる。版を確かめてから、ルーターを使い始めてマウントする
-- 回答の状態は、選んだグループと、チェックした項目と評価だけを持つ
-- 自分の結果ページと回答ページの組み立て方は、下書き案の検討で決める
+- 回答の状態は、選んだグループと、チェックした項目と評価と、冪等キーだけを持つ
+- 回答ページは、設問のデータを並べ、各項目のチェックと評価をストアから読む（結合した形を作らない）。評価が未選択の項目のエラーは、ストアの状態から出す
+- 自分の結果ページは、組み立ての API の応答を表示する。名前を確定しても保存しない
+- URL 共有・PDF・CSV を押すと、冪等キーつきで保存してから、それぞれの操作を行う。保存した時点で名前を固定する
+- 共有ビューと PDF は、保存したシートをそのまま表示する
+- CSV は、バックエンドが保存したシートから作る
 
 ## 次の作業
 
-### 1. 下書き案の検討（最初に行う）
+### 定義の API の実装
 
-案の流れ。
-
-- 回答ページから結果ページへ進むときに、回答（識別子・評価・版）を送り、シートを下書きとして作る。名前は空のまま
-- バックエンドは、文言つきの回答を組み立てて保存し、ID と文言つきの回答を返す。自分の結果ページは、それを表示する
-- 名前を入れる前に回答を直して結果ページへ進んだときは、同じシートの回答を差し替える
-- 名前を確定したら、シートに名前を入れて確定にする
-  - バックエンドは、名前が空のときだけ受け付ける（名前の固定をバックエンドで守る）
-  - 共有と PDF は、確定したシートだけで使える
-  - PDF の生成は、名前を入れたコミットの後に始める
-- 確定した後に回答を直したときは、新しいシートを作り、名前を引き継ぐ。共有したリンクは、直す前の内容のまま残る
-- 再読み込みしたときは、ブラウザに保存したシートの ID で読み出して表示する
-
-この案で変わる決定事項。
-
-- シートの API の「名前は空欄不可」（作るときは名前なし、後から1回だけ入れる）
-- PDF の生成の開始（「保存のコミット後」から「名前を入れたコミット後」へ）
-- 自分の結果ページは、保存したシートを表示する形になり、フロントでの定義と回答の結合（`useMergedSurvey.ts`）は無くなる
-
-あわせて確かめること。
-
-- 回答ページは、設問のデータを並べ、各項目のチェックと評価をストアから読む（結合した形を作らない）。チェックしたが評価が未選択の項目のエラーは、ストアの状態から出す
-- 名前の無い下書きのシートの扱い（期限切れの定期削除、ID で開かれたときの表示）
-
-決まったら、検討の残りがあればそれを行い、無ければ定義の API の実装に入る。
-
-### 2. 定義の API の実装
+- バックエンドの起動時の処理（読み込み・検証・番号・版・表示設定の既定値）と、定義の API から作る
 
 ## 実装のときに決めること
 
@@ -70,9 +48,12 @@
 - PDF の描画役が待つ `data-pdf-ready` が、定義とシートの読み込みの後に付くかを確かめる
 - PDF・CSV のダウンロードのしかた
   - 今は `ShareButton.vue` の `handlePdfDownload` で `window.open` している。ダウンロード用のエンドポイントが 410 を返すと、新しいタブにエラーの JSON が出る
-- ページを開いたまま期限が切れたときの保存のし直し（`handlePdfRetry` は、保存に失敗したときしか保存し直さない）
-- 名前の入力の検証で、先頭の文字の確認（`FORMULA_PREFIX`）を残すか
 - 版が変わったときの一文を出す画面
+- 組み立てに失敗したときの、自分の結果ページの表示
+- 保存した時点で名前を固定する処理（確定後の編集の猶予の途中でも固定にする）
+- アンケートをやり直すリセットのボタン（`resetAll` と同じ処理を使う）
+- URL 共有の API が失敗したときのボタンの表示（`ShareUrlButton.vue`。今は代わりにクエリ方式の URL をコピーしている）
+- タブの間の状態の同期（入れるかどうかも含めて）
 
 名前。
 
@@ -85,11 +66,18 @@
 - 開発環境で `surveys/` を読ませる方法（`docker-compose.yml` のバックエンドは `./spring-backend` だけをマウントしている。`surveys/` のマウントと `SURVEY_DIR` の設定が要る）
 - Java の検証ライブラリ（未決事項の「スキーマのライブラリを選ぶとき」）
 - アイコンの配信（定義の API は、表示設定のアイコンの名前をそのまま返す。SVG をどこから配信するかを決める）
-- エンドポイントのパス（CSV のダウンロードを含む）
-- エラーの応答の形（今は `ProblemDetail`）。保存で版が違うときと、定義との照合で断るときの応答も、ここで決める
-- `shareToken` の列の扱い
+- エンドポイントのパス（組み立て・URL 共有・PDF 生成・CSV と、PDF・CSV のダウンロード）
+- `ProblemDetail` の `type` の値（URI の形と名前）
+- 冪等キーの項目の名前と、シートのテーブルの列とテーブルの名前（今の `skill_sheets` は汎用の名前にする）
+- IP の取り方（解説を付けて決める）
+  - 今の `resolveClientIp`（`SkillSheetController.java`）は、前段にプロキシが無いと、`X-Real-IP` のヘッダーで IP を偽れる
+  - Spring Boot 版は `server.forward-headers-strategy` に任せる形がある
+- 回数制限の上限と時間の幅の、既定値と環境変数の名前
+- 期限の日数の、既定値と環境変数の名前（`application.properties` の、S3 のライフサイクルのルールと揃えるというコメントは無くなる）
+- 共有 URL とダウンロードの URL を組み立てるための、公開の URL の設定（名前と、未設定のときの扱い）。PDF の描画役が開く URL（compose の中のコンテナの名前）との違いも、ここで扱う
+- ready になる前に、PDF のダウンロードの URL を開かれたときの返し方
 - 保存のリクエストの本文の大きさの上限（Spring Boot 版の今の値は未確認。Go 版は `http.MaxBytesReader` で掛ける）
-- CSV のファイル名の指定（`Content-Disposition`。日本語のファイル名）
+- CSV のファイル名の指定（`Content-Disposition`。日本語のファイル名）と、BOM（今はフロントの `downloadCsv` で付けている）
 - コンテナの時刻の設定（CSV のファイル名の日付のため）
 
 ## 実装のときに確かめること
@@ -111,11 +99,12 @@
 
     ```js
     (async () => {
-      if (document.querySelector('[data-pdf-error]')) throw new Error('pdf-error')
-      if (!document.querySelector('[data-pdf-ready]')) return false
-      await document.fonts.ready
-      return true
-    })()
+      if (document.querySelector('[data-pdf-error]'))
+        throw new Error('pdf-error');
+      if (!document.querySelector('[data-pdf-ready]')) return false;
+      await document.fonts.ready;
+      return true;
+    })();
     ```
 
   - 許可の一覧は、ページが読み込むすべてのリクエストに掛かる。Google Fonts（`fonts.googleapis.com`・`fonts.gstatic.com`）も入れないと、フォントが止められ、イメージの `fonts-noto-cjk` で描かれる
@@ -157,17 +146,24 @@
   - `src/data/questions/`、`buildInitialSelections`・`buildQuestionsForCategory`・`normalizeSurveyState`（`utils/surveyState.ts`）を削除する
   - `sheetMapper.ts` の `toSheetDto` を、新しい形から組み立てる
 - CSV をバックエンドに移す（段階4）
-  - バックエンドに、CSV の作成とダウンロード用のエンドポイントを足す
-  - フロントの `csvUtils.ts` とそのテストを削除し、`CsvButton.vue` をダウンロードの形に変える
-- `SaveRateLimiter.java:50` の文から「スキルシート」を外す（段階4）
-- V1 を作り直すときに、シートのテーブルを文言つきの回答（jsonb）の形にし、`sheet_categories`・`sheet_answers` を無くす。ほかの文字列の列（`user_name` の `varchar(255)` など）の型も見直す（段階4）
+  - バックエンドに、CSV の API とダウンロード用のエンドポイントを足す
+  - フロントの `csvUtils.ts` とそのテストを削除し、`CsvButton.vue` を、CSV の API が返す URL を開く形に変える
+- 回数制限を、新しいシートの行を作ったときだけ数える形に変える（段階4）
+  - `SaveRateLimiter.java:50` の文から「スキルシート」を外す
+  - `SaveRateLimiter.java` の Javadoc の「PdfController/LambdaPdfServiceの再試行スロットリングと同じ設計方針に揃えている」を直す
+- V1 を作り直すときに、シートのテーブルを `DECISIONS.md` の「DB とデータ」の形にし、`sheet_categories`・`sheet_answers`・`share_token` を無くす（段階4）
 - 方式の変更で影響するもの（段階4）
   - バックエンド：エンティティ（`SheetCategory`・`SheetAnswer` は無くなる）、リポジトリ、`dto/`、`SkillSheetService`、テスト（`SkillSheetServiceTest`・`SkillSheetServiceIntegrationTest`・`SkillSheetControllerTest`）
-  - フロント：`sheetMapper.ts`（`toSheetDto`・`toSurveyState`）、`ResultPage.vue` の共有ビューの経路、それぞれのテスト
+  - バックエンドの PDF：`PdfController.regenerate`、`LambdaPdfService.onSheetSaved` と `SheetSavedEvent`（保存のコミット後の依頼）は無くなる。`PdfStatusResponse` から `downloadUrl` を外す
+  - フロント：`useMergedSurvey.ts` は無くなる。`sheetMapper.ts`（`toSheetDto`・`toSurveyState`）、`ResultPage.vue`（`handleNameCommitted` の保存と、共有ビューの経路）、それぞれのテスト
+  - フロントのストアと共有メニュー：`useSurveyStore.ts` の `savedDataSnapshot`・`isIdVerified`・`getSavedIdOrSave`、`ShareButton.vue` の `openMenu`・`preparePdf`・`handlePdfRetry`、`usePdfStatus.ts` の `refreshDownloadUrl`・`requestRegeneration`（`request` と `retry` は PDF 生成の API を呼ぶ1つの操作にまとめる）
   - e2e：共有ビューのモック（`e2e/mocks.ts`）の応答の形
-- 二重の生成の防止を状態での判定に変えるときに、次のコメントを直す（段階4）
-  - `usePdfStatus.ts` の `requestRegeneration` の「バックエンドが直近15秒のInvokeをスロットリングするため」
-  - `SaveRateLimiter.java` の Javadoc の「PdfController/LambdaPdfServiceの再試行スロットリングと同じ設計方針に揃えている」
+- 名前の先頭の文字の確認をやめる（段階4）
+  - `useNameCommit.ts` の `errorMessage`・`INVALID_PREFIX_MESSAGE`、`EditableNameHeading.vue` の名前のエラーの表示、`constants.ts` の `FORMULA_PREFIX`
+  - テスト：e2e の `basicFlow.spec.ts`・`pages/ResultPage.ts`
+- クエリ方式の共有を、定義の API を実装するときに削除する（段階4）
+  - 削除の対象：`shareUtils.ts` の圧縮・展開、`lz-string`、`ResultPage.vue` と `router/index.ts` の `data=`、関連するテスト、e2e の `share.spec.ts` と `e2e/pages/ResultPage.ts` の `data=` の扱い
+  - あわせて `isBackendEnabled()` を無くす（PDF ボタンの表示（`ShareButton.vue`）や `api.ts` でも使っている）
 - PDF のファイル名の指定（`Content-Disposition`）を、Lambda（`aws-lambda/src/index.ts:58`）からバックエンドのダウンロード用のエンドポイントに移し、`filename="skillsheet.pdf"` を汎用の名前にする（段階5）
 - 開発環境の `docker-compose.yml` に Gotenberg のコンテナを足す（段階5）
 - Lambda を Gotenberg にそろえたら、`aws-lambda/` と `test.yml` の `lambda-build-check` を削除する（段階5）
@@ -187,13 +183,6 @@
   - `maxLength` を Unicode の文字数（コードポイントの数）で数えるか
   - キーの重複のエラーに、行番号などの位置の情報が付くか（Jackson の `StreamReadException`、Go の v2 のエラー）
   - JSON として読み込めなかったときのエラーの文に、ファイルの中身が含まれるか（含まれるなら、制御文字の置き換えの対象にする）
-- クエリ方式の共有を削除した後、保存に失敗したときの共有ボタンの挙動
-  - 今は代わりにクエリ方式の URL をコピーしている（`ShareUrlButton.vue`）
-  - 案：ボタンにエラーを表示し、やり直せるようにする
-- クエリ方式の共有を削除する時期
-  - フロントが定義を API から読むようになると、バックエンドなしでは画面を組み立てられなくなる。その時点で、`isBackendEnabled()` の整理とあわせて扱いを決める
-  - `isBackendEnabled()` は、PDF ボタンの表示（`ShareButton.vue`）や `api.ts` でも使っている
-  - 削除の対象：`shareUtils.ts` の圧縮・展開、`lz-string`、`ResultPage.vue` と `router/index.ts` の `data=`、関連するテスト、e2e の `share.spec.ts` と `e2e/pages/ResultPage.ts` の `data=` の扱い
 - Spring Boot 版と Go 版で検証の規則を揃える方法
   - 案：正しい定義と、間違いを1つずつ入れた定義を JSON で用意し、期待するエラーと一緒にリポジトリに置く
   - Spring Boot と Go の両方のテストで同じファイルを読み、スキーマのファイルも共用する
