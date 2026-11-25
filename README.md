@@ -51,14 +51,6 @@
 ライトモードとダークモードに対応しています。ヘッダーのボタンから切り替えられます。\
 上記の操作動画も、閲覧している GitHub のテーマ設定に合わせて切り替わります。
 
-## 本アプリで意識したポイント
-
-- [ユーザーの操作を止めない、段階的な機能制限とUIによる操作誘導](./DESIGN_NOTES.md#状態に応じた段階的な機能制限)
-- [ユーザーの入力タイミングを活用した、Lambda のコールドスタート対策](./DESIGN_NOTES.md#lambda-のコールドスタートを見越したプリフェッチ設計)
-- [Vitest と Playwright の適材適所での使い分け](./DESIGN_NOTES.md#vitest-と-playwright-の使い分け)
-- [要素指定から役割指定へ変更したテスト設計](./DESIGN_NOTES.md#アクセシビリティを軸にしたテスト設計)
-- [処理リソースを分散させた Railway / Lambda の機能分割](./DESIGN_NOTES.md#railway-と-lambda-による処理の分離)
-
 ## 使用技術
 
 ### フロントエンド
@@ -157,7 +149,3 @@ graph TD
     style Lambda fill:#FF9900,stroke:#333,stroke-width:2px,color:#fff
     style S3 fill:#569A31,stroke:#333,stroke-width:2px,color:#fff
 ```
-
-## 設計ノート
-
-実装で行った設計判断とその背景は [DESIGN_NOTES.md](./DESIGN_NOTES.md) にまとめています。
