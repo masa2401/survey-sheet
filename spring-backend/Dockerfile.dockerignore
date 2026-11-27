@@ -1,0 +1,7 @@
+# Dockerfile（context はリポジトリ直下）で使うものだけを通す
+*
+!spring-backend/.mvn
+!spring-backend/mvnw
+!spring-backend/pom.xml
+!spring-backend/src
+!schema

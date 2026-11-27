@@ -7,18 +7,27 @@
 - 段階2（設問の定義の形と、JSON Schema の作成）は完了し、`main` にマージ済み（#3）
   - スキーマは `schema/`、スキルシートのサンプルは `surveys/skill-sheet/` にある
   - VS Code でのスキーマのキーワードの効き方も確認済み
-- 段階3と4の、API の形とデータの持ち方に関わる検討は、ひととおり終わった。実装に入る（バックエンドの定義の API から）
+- 段階3と4の、API の形とデータの持ち方に関わる検討は、ひととおり終わった
 - 役割分担の方針（フロントは表示と状態の管理だけ。`ROADMAP.md` の「役割分担」）が決まった
+- 定義の API（`GET /api/survey`）を、Spring Boot 版で作った（作業ブランチ、未コミット）
+  - 起動時の読み込み・検証・番号・版・表示設定の既定値と、間違いがあれば起動を止める処理
+  - 処理は `service/definition/` の普通のクラス、Spring とつなぐのは `DefinitionService`、エラーの表示は `StartupFailureAnalyzer`
+  - `schema/` は `pom.xml` のリソースでクラスパスに取り込み、開発の compose は `schema/`・`surveys/` をマウントする
+  - 本番の `Dockerfile` のビルドの `context` は、リポジトリ直下（`deploy.yml` も同じ）
+  - テストは `./mvnw test` で通ることを確認済み
+- バックエンドのパッケージは `com.surveysheet` に改名した
 - 決定済み（`DECISIONS.md`）
-  - 定義の API の形（パスと `selectable` の印を含む。アイコンの配信を除く）。表示設定は既定値を当てて返す
+  - 定義の API の形（パス・`selectable` の印・`limits`・値が無い項目は `null`。アイコンの配信を除く）。表示設定は既定値を当てて返す
   - シートの API と DB の形（組み立て・URL 共有・PDF 生成・CSV・読み出し、冪等キー、エラーの見分け方、回数制限）
   - 自分の結果ページの流れ（組み立ての API で表示し、URL 共有・PDF・CSV を押したときに保存する）
   - PDF の構成。描画役は Gotenberg（Lambda は仮決定）。生成は PDF のボタンを押したときに始める
   - フロントの読み込みと状態（読み込みの場所、失敗したときの表示、定義の API の応答の置き場所、回答の状態の形、版の確認）
-  - CSV はバックエンドで作る
+  - CSV はバックエンドで作る。星の表示と凡例はフロントで作る
+  - 名前の上限は管理者が設定する。管理者に渡す設定ファイルは `config.json`
+  - 定義ファイルの検証とエラーの一覧の形
   - 共用するテスト用の定義の形
 - コードの名前の見直しが終わった（「実装のときに変える名前」）
-- アプリの中身は、移行前のスキルシート作成アプリのまま
+- フロントと、シートの API は、移行前のスキルシート作成アプリのまま
 - `deploy.yml` は手動実行のみ。本番のデプロイ先は未設定
 - `main` はブランチ保護済み（PR 必須、必須チェックは `ci-result`）
 - Dependabot は alerts と security updates を有効にしている。version updates は GitHub Actions だけ（`dependabot.yml`）
@@ -30,8 +39,8 @@
 
 ## 完成形のイメージ（段階4を終えた時点）
 
-- バックエンドは起動時に `SURVEY_DIR` の `survey.json` と `display.json` を読んで検証し、番号を振り、版を計算し、表示設定に既定値を当てて、メモリに持つ
-- 定義の API は、メモリに持った内容を返すだけ
+- バックエンドは起動時に `SURVEY_DIR` の `survey.json` と `display.json` を読んで検証し、番号を振り、版を計算し、表示設定に既定値を当てて、メモリに持つ（済み）
+- 定義の API は、メモリに持った内容と、名前の上限を返すだけ（済み）
 - フロントは `main.ts` で定義の API を読み、`utils/definition.ts` に入れる。版を確かめてから、ルーターを使い始めてマウントする
 - 回答の状態は、選んだグループと、チェックした項目と評価と、冪等キーだけを持つ
 - 回答ページは、設問のデータを並べ、各項目のチェックと評価をストアから読む（結合した形を作らない）。設問の部品（`QuestionSection.vue`）は、ストアを直接書き換える。評価が未選択の項目のエラーは、ストアの状態から出す
@@ -40,23 +49,12 @@
 - 共有ビューと PDF は、保存したシートをそのまま表示する
 - CSV は、バックエンドが保存したシートから作る
 
-## 次の作業
+## 次の作業の候補
 
-### 定義の API の実装
+順番は決めていない。
 
-- バックエンドの起動時の処理（読み込み・検証・番号・版・表示設定の既定値）と、定義の API（`GET /api/survey`）から作る
-- 起動時の検証には、`alwaysShownGroups` が0件で `selectableGroups` が1件の定義をエラーにする規則も入れる
-- `schema/display.schema.json` の `result.heading` の `pattern` を `^\{name\}[^{}\p{Cc}]*$` に変え、`patternErrorMessage` も合わせる
-- この作業に含めないもの
-  - クエリ方式の共有の削除（フロントの作業のときに行う）
-  - アイコンの配信（SVG を置く場所を決めることも含めて、アプリ全体の改修が終わった後に行う）
-- この作業で決めること
-  - Spring Boot 版で `schema/` を取り込む方法（`spring-backend/` の外にある。Maven のリソースにできるか、Docker のビルドの `context`（`./spring-backend`）から見えるかは未確認）
-  - 開発環境で `surveys/` を読ませる方法（`docker-compose.yml` のバックエンドは `./spring-backend` だけをマウントしている。`surveys/` のマウントと `SURVEY_DIR` の設定が要る）
-  - Java の検証ライブラリ（「未決事項」の「スキーマのライブラリを選ぶとき」を確かめる）
-  - 版のハッシュの計算方法
-    - 候補：定義ファイルのバイト列から計算する案と、JSON を整えてから計算する案
-    - バイト列から計算する場合は、BOM を取り除く前と後のどちらで計算するかも決める
+- シートの API（組み立て・URL 共有・PDF 生成・CSV・読み出し）と、DB の V1 の作り直し
+- フロントを、定義の API から画面を組み立てる形にする（段階3）
 
 ## 実装のときに決めること
 
@@ -73,21 +71,19 @@
 - アンケートをやり直すリセットのボタン（`resetAll` と同じ処理を使う）
 - URL 共有の API が失敗したときのボタンの表示（`ShareUrlButton.vue`。今は代わりにクエリ方式の URL をコピーしている）
 - タブの間の状態の同期（入れるかどうかも含めて）
-- バックエンドから受け取るものの、API の中の場所
-  - 星の文字列と、凡例の各段階の文字列
-  - 名前の文字数の上限
-  - 期限切れの画面に出す、期限の日数
 
 バックエンド。
 
 - エンドポイントのパス（組み立て・URL 共有・PDF 生成・CSV と、PDF・CSV のダウンロード）
 - `ProblemDetail` の `type` の値（URI の形と名前）
 - 冪等キーの項目の名前と、シートのテーブルの列とテーブルの名前（今の `skill_sheets` は汎用の名前にする）
+- 名前の検証を、定義の API と同じ上限（`DefinitionService` の値）で行う。今の `SaveSheetRequest` の `@Size(max = 100)` は使わない
 - IP の取り方（解説を付けて決める）
   - 今の `resolveClientIp`（`SkillSheetController.java`）は、前段にプロキシが無いと、`X-Real-IP` のヘッダーで IP を偽れる
   - Spring Boot 版は `server.forward-headers-strategy` に任せる形がある
 - 回数制限の上限と時間の幅の、既定値と環境変数の名前
 - 期限の日数の、既定値と環境変数の名前（`application.properties` の、S3 のライフサイクルのルールと揃えるというコメントは無くなる）
+- `config.json` に入れる設定の一覧と、`config.json` から環境変数へ渡す仕組み（段階8で決めてもよい）
 - 共有 URL とダウンロードの URL を組み立てるための、公開の URL の設定（名前と、未設定のときの扱い）。PDF の描画役が開く URL（compose の中のコンテナの名前）との違いも、ここで扱う
 - ready になる前に、PDF のダウンロードの URL を開かれたときの返し方
 - 保存のリクエストの本文の大きさの上限（Spring Boot 版の今の値は未確認。Go 版は `http.MaxBytesReader` で掛ける）
@@ -98,12 +94,10 @@
 
 名前の付け方は `CLAUDE.md` の「名前」に従う。処理ごと無くなるもの（「段階4以降で行うこと」）は含めない。
 
-バックエンド。
+バックエンド（パッケージの `com.surveysheet` と、`SurveySheetApplication` は変更済み）。
 
-- パッケージ：`com.skillsheet` → `com.surveysheet`
-- `SkillSheetApplication` → `SurveySheetApplication`
 - `SkillSheet`（エンティティ）→ `Sheet`、`SkillSheetRepository` → `SheetRepository`、`SkillSheetService` → `SheetService`、`SkillSheetController` → `SheetController`
-  - コントローラーを分けるかは、エンドポイントを決めるときに決める
+  - シートの API を作り直すときに変える。コントローラーを分けるかは、エンドポイントを決めるときに決める
 
 フロントのファイル。
 
@@ -192,7 +186,8 @@ e2e のロケーター（`data-slot`）。
 ## 段階3で行うこと
 
 - 固定の文言を `src/data/texts.ts` に移し、`composables/useTexts.ts` を作る（表示設定の値の差し込みだけを行う。既定値はバックエンドが当てる）
-  - `constants.ts` の `LEVEL_LABELS` は無くす。星の文字列と凡例の文字列は、バックエンドから受け取る
+  - `constants.ts` の `LEVEL_LABELS` は無くす。星の表示と凡例は、評価の数値と `scale.levels` からフロントで作る
+  - 名前の入力欄の上限とラベルの数は、定義の API の `limits.userNameMaxLength` を使う（今は `EditableNameHeading.vue` の定数 `NAME_MAX_LENGTH`）
 - 文面の変更と、直すテスト
   - 「お名前」→「名前」：`EditableNameHeading.vue:23, 119`、`useGuestGate.ts:6`
     - テスト：`EditableNameHeading.test.ts:12, 14`、e2e の `share.spec.ts:175`、`pages/ResultPage.ts:20`
@@ -200,7 +195,7 @@ e2e のロケーター（`data-slot`）。
     - テスト：`App.test.ts:107`、`ResultPage.test.ts:213, 218, 277, 284`
   - リンク切れの文（`ResultPage.vue:124`）：テストの修正は不要
 - TOP（`TopPage.vue`）
-  - グループの `description` が無いときは、説明の `<p>` と `aria-describedby` を出さない
+  - グループの `description` が `null` のときは、説明の `<p>` と `aria-describedby` を出さない
   - `selectableGroups` が0件なら選ぶ欄を出さない
   - 選ぶ欄の見出しと補足を、件数で切り替える（見出しの既定値はバックエンドが決める）
   - 全員が回答するグループが0件のときの開始ボタン（ツールチップと、押したときのフォーカス）
@@ -238,6 +233,10 @@ e2e のロケーター（`data-slot`）。
 - 開発環境の `docker-compose.yml` に Gotenberg のコンテナを足す（段階5）
 - Lambda を Gotenberg にそろえたら、`aws-lambda/` と `test.yml` の `lambda-build-check` を削除する（段階5）
 - `aws-lambda/` を使い続ける場合は、`page.pdf()` の `printBackground: true` を外す（段階5）
+- 本番での `surveys/` の渡し方を、デプロイ先に合わせて決める（段階6）
+  - 今の本番のイメージには `surveys/` が入っていないので、そのままでは起動しない（`SURVEY_DIR` が無いと起動を止める）
+  - 候補：イメージに入れる、実行するときにマウントする、両方
+- `deploy.yml` の自動実行を戻すときに、`on:` と、`github.event.workflow_run` を使う `if:` の条件を作り直す（段階6。今の `on:` は `workflow_dispatch` だけなので、手動で実行しても `flags` のジョブが飛ばされ、何もデプロイされない）
 - `TheFooter.vue` の GitHub のリンク先（旧リポジトリ `FullStack-CreateSkillSheet`）を差し替える（段階8）
 
 ## 未着手の整理
@@ -247,14 +246,15 @@ e2e のロケーター（`data-slot`）。
 
 ## 未決事項
 
-- スキーマのライブラリを選ぶとき（段階4の Java、段階7の Go）に確かめること
-  - 正規表現の `\p{Cc}`・`\p{Zs}` が使えるか（Ajv・VS Code・Go の標準の正規表現は確認済み。Java は未確認）
-  - `maxLength` を Unicode の文字数（コードポイントの数）で数えるか
-  - キーの重複のエラーに、行番号などの位置の情報が付くか（Jackson の `StreamReadException`、Go の v2 のエラー）
-  - JSON として読み込めなかったときのエラーの文に、ファイルの中身が含まれるか（含まれるなら、制御文字の置き換えの対象にする）
+- 段階7で Go のスキーマのライブラリを選ぶときに確かめること（Java の networknt 3.x では、次のとおり確認済み）
+  - 正規表現の `\p{Cc}`・`\p{Zs}` が使えるか（Java：使える。Ajv・VS Code・Go の標準の正規表現も確認済み）
+  - `maxLength` を Unicode の文字数（コードポイントの数）で数えるか（Java：コードポイントで数える）
+  - キーの重複のエラーに、行番号などの位置の情報が付くか（Java：Jackson の例外から行・列・キーの並びが取れる。Go は v2 のエラーで確かめる）
+  - JSON として読み込めなかったときのエラーの文に、ファイルの中身が含まれるか（Java：例外の文は使わず、行と列だけから文を作る。Jackson 3 は既定で中身を伏せる）
 - 共用するテスト用の定義（`testdata/`）を作るときに決めること
   - 期待するエラーの書き方、正常系の期待する結果に含めるもの、境界のケースの範囲
   - 案：スキーマのファイルも共用する。規則を1つずつすべて試す（`alwaysShownGroups` 0件・`selectableGroups` 1件の形も入れる）
+  - 両方の間違いがある定義では、期待するエラーはスキーマの分だけになる（コードの規則は、スキーマの違反が0件のときだけ確かめるため）
 - CI でスキーマを Ajv の strict モードで読み込むか（CI を検討するときに決める）
   - 使う場合は、`ajv.addKeyword("patternErrorMessage")` で登録する
 - 2つ目のサンプル定義のテーマ（機能の改修が終わってから選ぶ）
@@ -270,6 +270,7 @@ e2e のロケーター（`data-slot`）。
   - 上げる場合は `typescript@~6.0.3` と `@vue/tsconfig@^0.9.1` を揃えて上げる
   - typescript-eslint の対応範囲が `<6.1.0` のため、`^` ではなく `~` にする
   - npm の `latest` は 7 系なので、バージョンは明示して入れる
+- 英語版で、エラーの文の件数（「{n}件あります」）は、数によって名詞の形が変わるので、文を組み立てる処理の形を変える必要がある（配布の段階）
 
 ## 依存関係
 
@@ -283,6 +284,5 @@ e2e のロケーター（`data-slot`）。
 ## 環境の注意
 
 - macOS では、`npm ci` のたびに fsevents の install script がブロックされた警告が出る。動作には影響しないため、`allowScripts` には追加していない
-- Apple Silicon の Mac で、次の点は未確認
-  - `eclipse-temurin:25-jre-alpine` が arm64 で動くか
-  - PDF 生成の Lambda イメージ（Puppeteer）がローカルでビルドできるか（本番用のイメージは CI の amd64 でビルドしている）
+- Apple Silicon の Mac で、PDF 生成の Lambda イメージ（Puppeteer）がローカルでビルドできるかは未確認（本番用のイメージは CI の amd64 でビルドしている）
+  - `eclipse-temurin:25-jdk-alpine`・`25-jre-alpine` は、arm64 で動くことを確認済み

@@ -6,6 +6,16 @@
       "description": "CORS Origin 許可設定"
     },
     {
+      "name": "survey.dir",
+      "type": "java.lang.String",
+      "description": "定義ファイル（survey.json・display.json）を置いたフォルダ"
+    },
+    {
+      "name": "sheet.user-name-max-length",
+      "type": "java.lang.Integer",
+      "description": "名前の文字数の上限（1〜100）"
+    },
+    {
       "name": "sheet.expiry.days",
       "type": "java.lang.Long",
       "description": "DBへ保存するシートの保存期間（日数）"

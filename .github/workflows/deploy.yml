@@ -59,7 +59,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
         with:
-          context: ./spring-backend
+          context: .
           file: ./spring-backend/Dockerfile
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest

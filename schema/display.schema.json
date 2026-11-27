@@ -96,8 +96,8 @@
           "description": "結果の見出しで、{name} の位置に回答者の名前が入る（例：{name} 様のスキルシート）",
           "type": "string",
           "maxLength": 40,
-          "pattern": "^[^{}\\p{Cc}]*\\{name\\}[^{}\\p{Cc}]*$",
-          "patternErrorMessage": "{name} をちょうど1つ含めてください。ほかに { } や、改行・タブなどの制御文字は使えません。"
+          "pattern": "^\\{name\\}[^{}\\p{Cc}]*$",
+          "patternErrorMessage": "{name} で始め、{name} はちょうど1つにしてください。ほかに { } や、改行・タブなどの制御文字は使えません。"
         }
       }
     },

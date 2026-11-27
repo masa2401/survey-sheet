@@ -49,6 +49,7 @@ services:
       - AWS_REGION=${AWS_REGION:-ap-northeast-1}
       - FRONTEND_BASE_URL=http://localhost:5173
       - SPRING_JPA_SHOW_SQL=true
+      - SURVEY_DIR=/surveys/skill-sheet
     deploy:
       resources:
         limits:
@@ -57,6 +58,9 @@ services:
       - ./spring-backend:/app
       - backend_target:/app/target/
       - ~/.m2:/root/.m2
+      # pom.xml の ../schema が、コンテナの中では /schema を指す
+      - ./schema:/schema:ro
+      - ./surveys:/surveys:ro
     depends_on:
       db:
         condition: service_healthy

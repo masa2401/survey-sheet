@@ -126,8 +126,24 @@
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>s3</artifactId>
     </dependency>
+
+    <dependency>
+      <groupId>com.networknt</groupId>
+      <artifactId>json-schema-validator</artifactId>
+      <version>3.0.9</version>
+    </dependency>
   </dependencies>
   <build>
+    <!-- 定義ファイルの JSON Schema は、リポジトリ直下の schema/ を正とし、クラスパスに取り込む -->
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>../schema</directory>
+        <targetPath>schema</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
