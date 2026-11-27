@@ -17,4 +17,4 @@ paths:
 - `@vue/test-utils` は、`flushPromises` のためだけに残している
 - Vitest のタイムゾーンは `Asia/Tokyo` に固定している（`vite.config.ts`）
 - テストを書き直したら、実装を意図的に壊して失敗することを確かめる
-- `ValidationError.vue` の、設問タイトルが無い場合のガードとそのテストは残す
+- `ValidationAlert.vue`（今の `ValidationError.vue`）の、設問タイトルが無い場合のガードとそのテストは残す

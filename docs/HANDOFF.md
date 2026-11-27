@@ -1,6 +1,6 @@
 # 引き継ぎ
 
-最終更新：2026-11-25
+最終更新：2026-11-27
 
 ## 現在地
 
@@ -10,16 +10,23 @@
 - 段階3と4の、API の形とデータの持ち方に関わる検討は、ひととおり終わった。実装に入る（バックエンドの定義の API から）
 - 役割分担の方針（フロントは表示と状態の管理だけ。`ROADMAP.md` の「役割分担」）が決まった
 - 決定済み（`DECISIONS.md`）
-  - 定義の API の形（アイコンの配信と、印のキーの名前を除く）。表示設定は既定値を当てて返す
+  - 定義の API の形（パスと `selectable` の印を含む。アイコンの配信を除く）。表示設定は既定値を当てて返す
   - シートの API と DB の形（組み立て・URL 共有・PDF 生成・CSV・読み出し、冪等キー、エラーの見分け方、回数制限）
   - 自分の結果ページの流れ（組み立ての API で表示し、URL 共有・PDF・CSV を押したときに保存する）
   - PDF の構成。描画役は Gotenberg（Lambda は仮決定）。生成は PDF のボタンを押したときに始める
   - フロントの読み込みと状態（読み込みの場所、失敗したときの表示、定義の API の応答の置き場所、回答の状態の形、版の確認）
   - CSV はバックエンドで作る
+  - 共用するテスト用の定義の形
+- コードの名前の見直しが終わった（「実装のときに変える名前」）
 - アプリの中身は、移行前のスキルシート作成アプリのまま
 - `deploy.yml` は手動実行のみ。本番のデプロイ先は未設定
 - `main` はブランチ保護済み（PR 必須、必須チェックは `ci-result`）
 - Dependabot は alerts と security updates を有効にしている。version updates は GitHub Actions だけ（`dependabot.yml`）
+
+## 進め方
+
+- 改修のコードは、すべて終わってから `main` に取り込む。途中の区切りで CI を通す必要はない
+- API の仕様を先に確定させる。手戻りが少なければ、作業の順番は問わない
 
 ## 完成形のイメージ（段階4を終えた時点）
 
@@ -27,7 +34,7 @@
 - 定義の API は、メモリに持った内容を返すだけ
 - フロントは `main.ts` で定義の API を読み、`utils/definition.ts` に入れる。版を確かめてから、ルーターを使い始めてマウントする
 - 回答の状態は、選んだグループと、チェックした項目と評価と、冪等キーだけを持つ
-- 回答ページは、設問のデータを並べ、各項目のチェックと評価をストアから読む（結合した形を作らない）。評価が未選択の項目のエラーは、ストアの状態から出す
+- 回答ページは、設問のデータを並べ、各項目のチェックと評価をストアから読む（結合した形を作らない）。設問の部品（`QuestionSection.vue`）は、ストアを直接書き換える。評価が未選択の項目のエラーは、ストアの状態から出す
 - 自分の結果ページは、組み立ての API の応答を表示する。名前を確定しても保存しない
 - URL 共有・PDF・CSV を押すと、冪等キーつきで保存してから、それぞれの操作を行う。保存した時点で名前を固定する
 - 共有ビューと PDF は、保存したシートをそのまま表示する
@@ -37,8 +44,12 @@
 
 ### 定義の API の実装
 
-- バックエンドの起動時の処理（読み込み・検証・番号・版・表示設定の既定値）と、定義の API から作る
+- バックエンドの起動時の処理（読み込み・検証・番号・版・表示設定の既定値）と、定義の API（`GET /api/survey`）から作る
 - 起動時の検証には、`alwaysShownGroups` が0件で `selectableGroups` が1件の定義をエラーにする規則も入れる
+- `schema/display.schema.json` の `result.heading` の `pattern` を `^\{name\}[^{}\p{Cc}]*$` に変え、`patternErrorMessage` も合わせる
+- この作業に含めないもの
+  - クエリ方式の共有の削除（フロントの作業のときに行う）
+  - アイコンの配信（SVG を置く場所を決めることも含めて、アプリ全体の改修が終わった後に行う）
 - この作業で決めること
   - Spring Boot 版で `schema/` を取り込む方法（`spring-backend/` の外にある。Maven のリソースにできるか、Docker のビルドの `context`（`./spring-backend`）から見えるかは未確認）
   - 開発環境で `surveys/` を読ませる方法（`docker-compose.yml` のバックエンドは `./spring-backend` だけをマウントしている。`surveys/` のマウントと `SURVEY_DIR` の設定が要る）
@@ -46,9 +57,6 @@
   - 版のハッシュの計算方法
     - 候補：定義ファイルのバイト列から計算する案と、JSON を整えてから計算する案
     - バイト列から計算する場合は、BOM を取り除く前と後のどちらで計算するかも決める
-  - 全員が回答するグループかの印のキーの名前
-  - アイコンの配信（定義の API は、表示設定のアイコンの名前をそのまま返す。SVG をどこから配信するかを決める）
-  - 看板（`top.banner`）も選ぶ欄も無い定義の扱い（看板か選ぶ欄のどちらかは必ず表示する）
 
 ## 実装のときに決めること
 
@@ -65,10 +73,10 @@
 - アンケートをやり直すリセットのボタン（`resetAll` と同じ処理を使う）
 - URL 共有の API が失敗したときのボタンの表示（`ShareUrlButton.vue`。今は代わりにクエリ方式の URL をコピーしている）
 - タブの間の状態の同期（入れるかどうかも含めて）
-
-名前。
-
-- 実装に入るときは、機能が変わって名前が合わなくなった変数名・関数名を見直し、あわせて変える
+- バックエンドから受け取るものの、API の中の場所
+  - 星の文字列と、凡例の各段階の文字列
+  - 名前の文字数の上限
+  - 期限切れの画面に出す、期限の日数
 
 バックエンド。
 
@@ -85,6 +93,65 @@
 - 保存のリクエストの本文の大きさの上限（Spring Boot 版の今の値は未確認。Go 版は `http.MaxBytesReader` で掛ける）
 - CSV のファイル名の指定（`Content-Disposition`。日本語のファイル名）と、BOM（今はフロントの `downloadCsv` で付けている）
 - コンテナの時刻の設定（CSV のファイル名の日付のため）
+
+## 実装のときに変える名前
+
+名前の付け方は `CLAUDE.md` の「名前」に従う。処理ごと無くなるもの（「段階4以降で行うこと」）は含めない。
+
+バックエンド。
+
+- パッケージ：`com.skillsheet` → `com.surveysheet`
+- `SkillSheetApplication` → `SurveySheetApplication`
+- `SkillSheet`（エンティティ）→ `Sheet`、`SkillSheetRepository` → `SheetRepository`、`SkillSheetService` → `SheetService`、`SkillSheetController` → `SheetController`
+  - コントローラーを分けるかは、エンドポイントを決めるときに決める
+
+フロントのファイル。
+
+| 今                                   | 変えた後                     |
+| ------------------------------------ | ---------------------------- |
+| `stores/useSurveyStore.ts`           | `stores/useAnswerStore.ts`（ストアの ID は `'answer'`） |
+| `composables/useSurveyValidation.ts` | `composables/useValidation.ts` |
+| `composables/useGuestGate.ts`        | `composables/useNameGate.ts` |
+| `composables/useAppNavigation.ts`    | `composables/useNavigation.ts` |
+| `components/AppButton.vue`           | `components/BaseButton.vue`  |
+| `components/ShareButton.vue`         | `components/ShareMenu.vue`   |
+| `components/MenuItemButton.vue`      | `components/IconMenuItem.vue` |
+| `components/LevelLegend.vue`         | `components/ScaleGuide.vue`  |
+| `components/ValidationError.vue`     | `components/ValidationAlert.vue` |
+| `components/StatePanel.vue`          | `components/ErrorPanel.vue`  |
+| `utils/constants.ts`                 | 無くす。`ROUTES` は `router/routes.ts` へ移し、`FORMULA_PREFIX` は削除する |
+
+フロントのファイルの中の名前。
+
+- ストア
+  - TOP で選んだグループの一覧：`selectedGroupIds`
+  - チェックした項目と評価：`checkedItems`
+  - `setCategoryChecked` → `setGroupSelected(groupId, selected)`
+  - `setAnswerSelection` → `setItemChecked(key, checked)` と `setItemValue(key, value)` に分ける（引数の形は実装のとき）
+- `useNameGate`：`isGuest` → `hasName`（真偽を反転。`ShareMenu.vue` は `v-if` と `v-else` の順を入れ替える）、`goToNameInput` → `focusInput`、`UseGuestGateReturn` は無くす（戻り値から型を導かせる）
+- `useNavigation`：`goToTop`・`goToSurvey`・`goToResult` → `visitTop`・`visitSurvey`・`visitResult`
+- `useValidation`
+  - `flaggedAnswerIdsOf` → `getInvalidItemIds(groupId, questionId)`
+  - 中だけの名前：`flaggedAnswers` → `snapshot`、`IncompleteAnswer` → `IncompleteItem`、`isSameAnswer` → `isSameItem`
+- 型：`ValidationErrorItem` → `ValidationError`（`categoryLabel` → `groupLabel`）、`PdfGenerationState` → `PdfState`（値の `'waiting'` → `'idle'`。ほかの値は今のまま）、`StarLevel` は無くす（評価の値は `number`）
+- `TopPage.vue`：`selectableCategories` → `selectableGroups`、`isCategoryChecked` → `isSelected`、`toggleCategory` → `toggle`
+- `AnswerItem.vue`
+  - props：`isChecked` → `checked`、`isFlagged` → `invalid`（評価が未選択かの判断も済ませて渡す）、`answerId` は無くす
+  - イベント：`update:answer` → `update:checked`・`update:value`
+  - `handleCheckChange`・`handleLevelChange` は無くし、テンプレートに `$event` で書く
+- `QuestionSection.vue`：props の `flaggedAnswerIds` → `invalidItemIds`。イベントを中継せず、ストアの `setItemChecked`・`setItemValue` を呼ぶ（`SurveyPage.vue` の `handleAnswerUpdate` は無くなる）
+- `v-for="category in …"` → `v-for="group in …"`
+
+e2e のロケーター（`data-slot`）。
+
+- `category-cards`・`category-card`・`category-card-title`・`category-card-description` → `group-cards`・`group-card`・`group-card-title`・`group-card-description`
+- `skill-card`・`skill-info` → `item-card`・`item-info`
+- `state-panel`・`state-panel-title` → `error-panel`・`error-panel-title`
+
+変えないもの。
+
+- `SurveyPage.vue`、`NotFound.vue`、`AnswerItem.vue`、`PdfButton.vue`・`CsvButton.vue`・`ShareUrlButton.vue`、`shareUtils.ts`、`WebConfig`
+- `useNameGate` の `guard`、`BaseButton.vue` の `inactive`、`AnswerItem.vue` の `v-for` の `level`、`useValidation` の `collectIncomplete`
 
 ## 実装のときに確かめること
 
@@ -125,7 +192,7 @@
 ## 段階3で行うこと
 
 - 固定の文言を `src/data/texts.ts` に移し、`composables/useTexts.ts` を作る（表示設定の値の差し込みだけを行う。既定値はバックエンドが当てる）
-  - `constants.ts` の `LEVEL_LABELS` の説明は `scale.levels` に置き換える（星の文字列は残す）
+  - `constants.ts` の `LEVEL_LABELS` は無くす。星の文字列と凡例の文字列は、バックエンドから受け取る
 - 文面の変更と、直すテスト
   - 「お名前」→「名前」：`EditableNameHeading.vue:23, 119`、`useGuestGate.ts:6`
     - テスト：`EditableNameHeading.test.ts:12, 14`、e2e の `share.spec.ts:175`、`pages/ResultPage.ts:20`
@@ -139,7 +206,6 @@
   - 全員が回答するグループが0件のときの開始ボタン（ツールチップと、押したときのフォーカス）
     - カードの枠は `has-[:focus-visible]` のため、プログラムからのフォーカスで出ない可能性がある。実機で確かめ、出なければカードを短く強調するなどで補う
   - `top.banner` の看板。本文は `text-sm`（14px）にする案
-  - 看板か選ぶ欄の、どちらかは必ず表示する（看板が無いときの扱いは実装時に決める）
 - 回答ページ（`/survey`）：表示するグループが無いときは TOP へ移すガードを足す（`router/index.ts`）
 - グループの並び順を、全画面・CSV・PDF で揃える
 - 全員が回答するグループが0件の定義を使うテストを足す
@@ -165,7 +231,7 @@
 - 名前の先頭の文字の確認をやめる（段階4）
   - `useNameCommit.ts` の `errorMessage`・`INVALID_PREFIX_MESSAGE`、`EditableNameHeading.vue` の名前のエラーの表示、`constants.ts` の `FORMULA_PREFIX`
   - テスト：e2e の `basicFlow.spec.ts`・`pages/ResultPage.ts`
-- クエリ方式の共有を、定義の API を実装するときに削除する（段階4）
+- クエリ方式の共有を、フロントの作業のときに削除する（段階4）
   - 削除の対象：`shareUtils.ts` の圧縮・展開、`lz-string`、`ResultPage.vue` と `router/index.ts` の `data=`、関連するテスト、e2e の `share.spec.ts` と `e2e/pages/ResultPage.ts` の `data=` の扱い
   - あわせて `isBackendEnabled()` を無くす（PDF ボタンの表示（`ShareButton.vue`）や `api.ts` でも使っている）
 - PDF のファイル名の指定（`Content-Disposition`）を、Lambda（`aws-lambda/src/index.ts:58`）からバックエンドのダウンロード用のエンドポイントに移し、`filename="skillsheet.pdf"` を汎用の名前にする（段階5）
@@ -186,12 +252,9 @@
   - `maxLength` を Unicode の文字数（コードポイントの数）で数えるか
   - キーの重複のエラーに、行番号などの位置の情報が付くか（Jackson の `StreamReadException`、Go の v2 のエラー）
   - JSON として読み込めなかったときのエラーの文に、ファイルの中身が含まれるか（含まれるなら、制御文字の置き換えの対象にする）
-- Spring Boot 版と Go 版で検証の規則を揃える方法
-  - 案：正しい定義と、間違いを1つずつ入れた定義を JSON で用意し、期待するエラーと一緒にリポジトリに置く
-  - Spring Boot と Go の両方のテストで同じファイルを読み、スキーマのファイルも共用する
-  - 規則を1つずつすべて試す（`alwaysShownGroups` 0件・`selectableGroups` 1件の形も入れる）
-  - 期待するエラーは順序によらずに比べる
-  - 置き場所は作るときに決める（`SURVEY_DIR` で切り替えて読む案）
+- 共用するテスト用の定義（`testdata/`）を作るときに決めること
+  - 期待するエラーの書き方、正常系の期待する結果に含めるもの、境界のケースの範囲
+  - 案：スキーマのファイルも共用する。規則を1つずつすべて試す（`alwaysShownGroups` 0件・`selectableGroups` 1件の形も入れる）
 - CI でスキーマを Ajv の strict モードで読み込むか（CI を検討するときに決める）
   - 使う場合は、`ajv.addKeyword("patternErrorMessage")` で登録する
 - 2つ目のサンプル定義のテーマ（機能の改修が終わってから選ぶ）
